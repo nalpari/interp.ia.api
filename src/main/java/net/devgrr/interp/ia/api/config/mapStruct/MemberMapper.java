@@ -50,7 +50,7 @@ public interface MemberMapper {
   @Mapping(target = "image", ignore = true)
   @Mapping(target = "role", ignore = true)
   @Mapping(target = "isActive", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "createdDate", ignore = true)
   @Mapping(target = "refreshToken", source = "refreshToken")
   Member updateMemberRefreshToken(Member updateMember, @MappingTarget Member member);
 }
