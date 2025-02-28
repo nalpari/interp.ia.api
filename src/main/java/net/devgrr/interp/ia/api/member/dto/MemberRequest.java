@@ -6,9 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "회원 요청")
 public record MemberRequest(
-    @Schema(description = "회원 ID")
-        @NotBlank(message = "필수값: userId", groups = MemberValidationGroup.createGroup.class)
-        String userId,
     @Schema(description = "비밀번호")
         @NotBlank(message = "필수값: password", groups = MemberValidationGroup.createGroup.class)
         String password,

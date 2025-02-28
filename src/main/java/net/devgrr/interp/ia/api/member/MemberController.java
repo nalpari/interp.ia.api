@@ -38,10 +38,18 @@ public class MemberController {
         .collect(Collectors.toList());
   }
 
+//  @Operation(description = "사용자를 조회한다.")
+//  @GetMapping("/{userId}")
+//  public MemberResponse getUsersById(@PathVariable("userId") String userId) throws BaseException {
+//    return memberMapper.toResponse(memberService.getUsersById(userId));
+//  }
+
+  // 기존 ID/Password login/signup 방식에서 Email/password 로 변경하며 회원조회 api 파라미터도 email 로 변경
+  // TODO: 추후 기존 ID 회원 조회 api, 로직 주석 삭제 처리 예정
   @Operation(description = "사용자를 조회한다.")
-  @GetMapping("/{userId}")
-  public MemberResponse getUsersById(@PathVariable("userId") String userId) throws BaseException {
-    return memberMapper.toResponse(memberService.getUsersById(userId));
+  @GetMapping("/{email}")
+  public MemberResponse getMemberByEmail(@PathVariable("email") String email) throws BaseException {
+    return memberMapper.toResponse(memberService.getUsersByEmail(email));
   }
 
   @Operation(description = "사용자를 생성한다.")

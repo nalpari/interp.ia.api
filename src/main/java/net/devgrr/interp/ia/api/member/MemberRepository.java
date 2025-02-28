@@ -13,7 +13,9 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
 
   List<Member> findAllByIsActiveFalse();
 
-  Optional<Member> findByUserId(String userId);
+//  Optional<Member> findByUserId(String userId);
+
+  Optional<Member> findByEmail(String email);
 
   boolean existsByUserId(String userId);
 
