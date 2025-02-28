@@ -14,6 +14,7 @@ import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
 import net.devgrr.interp.ia.api.member.dto.MemberValidationGroup;
+import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -79,7 +80,12 @@ public class MemberController {
     /*
      * TODO: 사용자 비활성(삭제) API 추가
      * */
-
+    @Operation(description = "사용자의 계정을 비활성화합니다.")
+    @PatchMapping("/{email}")
+    public ResultResponse delUsersByEmail(@PathVariable("email") String email)
+        throws BaseException {
+        return memberService.delUsersByEmail(email);
+    }
     /*
      * TODO: 사용자 활성(복구) API 추가
      * */

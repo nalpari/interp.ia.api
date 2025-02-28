@@ -1,14 +1,17 @@
 package net.devgrr.interp.ia.api.config.mapStruct;
 
+import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.member.MemberRole;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
+import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import static java.time.LocalTime.now;
 
 // import org.mapstruct.factory.Mappers;
 
@@ -41,6 +44,8 @@ public interface MemberMapper {
   Member toMember(MemberRequest memberRequest);
 
   MemberResponse toResponse(Member member);
+
+  ResultResponse toResultResponse(boolean result, String message);
 
   @Mapping(target = "email", ignore = true)
   @Mapping(target = "password", ignore = true)

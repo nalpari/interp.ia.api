@@ -7,6 +7,7 @@ import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
+import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,12 +81,21 @@ public class MemberService {
     }
 
     @Transactional
-    public Member delUsersByEmail(String email) throws BaseException {
-        if(!memberRepository.existsByEmail(email)) {
-            throw new BaseException(
-                    ErrorCode.NOT_FOUND, "존재하지 않는 이메일입니다."
-            );
+    public ResultResponse delUsersByEmail(String email) throws BaseException {
+        boolean result = false;
+
+        Member member = memberRepository.findByEmail(email).orElseThrow(() ->
+                new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
+
+        if(!member.getIsActive()) {
+            return memberMapper.toResultResponse(result, "이미 비활성화 된 회원입니다.");
         }
-        return memberRepository.deactivateByEmail(email);
+
+        try {
+            if(memberRepository.deactivateByEmail(member.getEmail())==1) result = true;
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        }
+        return memberMapper.toResultResponse(result, "회원 비활성화");
     }
 }

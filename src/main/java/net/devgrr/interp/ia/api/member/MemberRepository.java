@@ -2,6 +2,8 @@ package net.devgrr.interp.ia.api.member;
 
 import java.util.List;
 import java.util.Optional;
+
+import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,9 +25,13 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
 
   Optional<Member> findByRefreshToken(String refreshToken);
 
+//  @Modifying
+//  @Query("UPDATE Member m SET m.isActive = false WHERE m.email = :email")
+//  void deactivateByUserId(@Param("email") String email);
+
   Optional<Member> findById(Long pkId);
 
   @Modifying
-  @Query("UPDATE Member m SET m.isActive = false WHERE m.email = :userId")
-  void deactivateByUserId(@Param("email") String email);
+  @Query("UPDATE Member m SET m.isActive = false , m.updatedAt=NOW() WHERE m.email= :email")
+  int deactivateByEmail(String email);
 }
