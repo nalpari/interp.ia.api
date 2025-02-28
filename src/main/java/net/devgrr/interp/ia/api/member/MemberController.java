@@ -52,7 +52,7 @@ public class MemberController {
     // 기존 ID/Password login/signup 방식에서 Email/password 로 변경하며 회원조회 api 파라미터도 email 로 변경
     @Operation(description = "사용자를 조회한다.")
     @GetMapping("/{email}")
-    public MemberResponse getUserByEmail(@PathVariable("email") String email) throws BaseException {
+    public MemberResponse getUsersByEmail(@PathVariable("email") String email) throws BaseException {
         return memberMapper.toResponse(memberService.getUsersByEmail(email));
     }
 
@@ -66,20 +66,14 @@ public class MemberController {
         return memberMapper.toResponse(memberService.setUsers(req));
     }
 
-    /*
-     * TODO: 사용자 정보 수정 API 추가
-     * */
     @Operation(description = "사용자의 정보를 수정한다.")
     @PutMapping("/{pkId}")
-    public MemberResponse putUserById(@PathVariable("pkId") Long pkId,
+    public MemberResponse putUsersById(@PathVariable("pkId") Long pkId,
                                       @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberRequest req)
             throws BaseException {
         return memberMapper.toResponse(memberService.putUsersById(pkId, req));
     }
 
-    /*
-     * TODO: 사용자 비활성(삭제) API 추가
-     * */
     @Operation(description = "사용자의 계정을 비활성화합니다.")
     @PatchMapping("/{email}")
     public ResultResponse delUsersByEmail(@PathVariable("email") String email)
