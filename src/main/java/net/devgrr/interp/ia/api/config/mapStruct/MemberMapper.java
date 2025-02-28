@@ -55,4 +55,11 @@ public interface MemberMapper {
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "refreshToken", source = "refreshToken")
   Member updateMemberRefreshToken(Member updateMember, @MappingTarget Member member);
+
+  @Mapping(source = "password", target = "password", qualifiedByName = "pwEncoder")
+  @Mapping(target = "role", ignore = true)
+  @Mapping(target = "refreshToken", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
+  void updateMember(MemberRequest req, @MappingTarget Member member) throws BaseException;
 }

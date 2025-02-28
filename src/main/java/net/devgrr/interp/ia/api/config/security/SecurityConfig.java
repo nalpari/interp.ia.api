@@ -57,7 +57,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         new AntPathRequestMatcher("/login"),
-                        new AntPathRequestMatcher("/api/users/signup"),
+                        new AntPathRequestMatcher("/api/users/**"),
                         new AntPathRequestMatcher("/error"))
                     .permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/admin"))

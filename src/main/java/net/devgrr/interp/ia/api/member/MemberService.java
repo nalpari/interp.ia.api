@@ -64,11 +64,28 @@ public class MemberService {
         return member;
     }
 
-//    @Transactional
-//    public void delUsersById(String userId) throws BaseException {
-//        if (!memberRepository.existsByUserId(userId)) {
-//            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 ID 입니다.");
-//        }
-//        memberRepository.deactivateByUserId(userId);
-//    }
+    @Transactional
+    public Member putUsersById(Long pkId, MemberRequest req) throws BaseException {
+        Member member = memberRepository.findById(pkId).orElseThrow(
+                () -> new BaseException(
+                        ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
+//        Member updateMember = memberMapper.toMember(req);
+        memberMapper.updateMember(req, member);
+        try {
+            memberRepository.save(member);
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        }
+        return member;
+    }
+
+    @Transactional
+    public Member delUsersByEmail(String email) throws BaseException {
+        if(!memberRepository.existsByEmail(email)) {
+            throw new BaseException(
+                    ErrorCode.NOT_FOUND, "존재하지 않는 이메일입니다."
+            );
+        }
+        return memberRepository.deactivateByEmail(email);
+    }
 }

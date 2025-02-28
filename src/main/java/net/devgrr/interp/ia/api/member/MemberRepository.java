@@ -23,6 +23,8 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
 
   Optional<Member> findByRefreshToken(String refreshToken);
 
+  Optional<Member> findById(Long pkId);
+
   @Modifying
   @Query("UPDATE Member m SET m.isActive = false WHERE m.email = :userId")
   void deactivateByUserId(@Param("email") String email);
