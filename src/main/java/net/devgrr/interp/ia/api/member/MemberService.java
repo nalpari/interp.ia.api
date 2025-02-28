@@ -87,15 +87,32 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email).orElseThrow(() ->
                 new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
 
-        if(!member.getIsActive()) {
+        if (!member.getIsActive()) {
             return memberMapper.toResultResponse(result, "이미 비활성화 된 회원입니다.");
         }
-
         try {
-            if(memberRepository.deactivateByEmail(member.getEmail())==1) result = true;
+            if (memberRepository.deactivateByEmail(member.getEmail()) == 1) result = true;
         } catch (Exception e) {
             throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
         }
         return memberMapper.toResultResponse(result, "회원 비활성화");
+    }
+
+    @Transactional
+    public ResultResponse putUsersActiveByEmail(String email) throws BaseException {
+        boolean result = false;
+
+        Member member = memberRepository.findByEmail(email).orElseThrow(() ->
+                new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
+
+        if (member.getIsActive()) {
+            return memberMapper.toResultResponse(result, "활성화 되어있는 회원입니다.");
+        }
+        try {
+            if (memberRepository.activeByEmail(member.getEmail()) == 1) result = true;
+        } catch (Exception e) {
+            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        }
+        return memberMapper.toResultResponse(result, "회원 활성화");
     }
 }

@@ -34,4 +34,8 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
   @Modifying
   @Query("UPDATE Member m SET m.isActive = false , m.updatedAt=NOW() WHERE m.email= :email")
   int deactivateByEmail(String email);
+
+  @Modifying
+  @Query("UPDATE Member m SET m.isActive = true, m.updatedAt=NOW() WHERE m.email= :email")
+  int activeByEmail(String email);
 }
