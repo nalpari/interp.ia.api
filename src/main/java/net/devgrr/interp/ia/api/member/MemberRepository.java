@@ -17,13 +17,13 @@ public interface MemberRepository extends JpaRepository<Member, Integer> {
 
   Optional<Member> findByEmail(String email);
 
-  boolean existsByUserId(String userId);
+//  boolean existsByUserId(String userId);
 
   boolean existsByEmail(String email);
 
   Optional<Member> findByRefreshToken(String refreshToken);
 
   @Modifying
-  @Query("UPDATE Member m SET m.isActive = false WHERE m.userId = :userId")
-  void deactivateByUserId(@Param("userId") String userId);
+  @Query("UPDATE Member m SET m.isActive = false WHERE m.email = :userId")
+  void deactivateByUserId(@Param("email") String email);
 }

@@ -42,12 +42,14 @@ public interface MemberMapper {
 
   MemberResponse toResponse(Member member);
 
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "userId", ignore = true)
+  @Mapping(target = "email", ignore = true)
   @Mapping(target = "password", ignore = true)
   @Mapping(target = "name", ignore = true)
-  @Mapping(target = "email", ignore = true)
   @Mapping(target = "image", ignore = true)
+  @Mapping(target = "position", ignore = true)
+  @Mapping(target = "department", ignore = true)
+  @Mapping(target = "job", ignore = true)
+  @Mapping(target = "phone", ignore = true)
   @Mapping(target = "role", ignore = true)
   @Mapping(target = "isActive", ignore = true)
   @Mapping(target = "createdAt", ignore = true)

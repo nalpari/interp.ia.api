@@ -30,6 +30,8 @@ public class MemberService {
         }
     }
 
+    // TODO: 기존 ID 회원 조회 api, 로직 주석 삭제 처리 예정
+    //
     //  public Member getUsersById(String userId) throws BaseException {
     //    Member member = memberRepository.findByUserId(userId).orElse(null);
     //    if (member == null) {
@@ -39,7 +41,6 @@ public class MemberService {
     //  }
 
     // 기존 ID/Password login/signup 방식에서 Email/password 로 변경하며 회원조회 api 파라미터도 email 로 변경
-    // TODO: 추후 기존 ID 회원 조회 api, 로직 주석 삭제 처리 예정
     public Member getUsersByEmail(String email) throws BaseException {
         Member member = memberRepository.findByEmail(email).orElse(null);
         if (member == null) {
@@ -63,11 +64,11 @@ public class MemberService {
         return member;
     }
 
-    @Transactional
-    public void delUsersById(String userId) throws BaseException {
-        if (!memberRepository.existsByUserId(userId)) {
-            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 ID 입니다.");
-        }
-        memberRepository.deactivateByUserId(userId);
-    }
+//    @Transactional
+//    public void delUsersById(String userId) throws BaseException {
+//        if (!memberRepository.existsByUserId(userId)) {
+//            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 ID 입니다.");
+//        }
+//        memberRepository.deactivateByUserId(userId);
+//    }
 }
