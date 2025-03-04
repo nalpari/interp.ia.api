@@ -1,13 +1,13 @@
 package net.devgrr.interp.ia.api.config.mapStruct;
 
+import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.member.MemberRole;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
+import net.devgrr.interp.ia.api.member.dto.MemberUpdateRequest;
+import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import net.devgrr.interp.ia.api.member.entity.Member;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 // import org.mapstruct.factory.Mappers;
@@ -42,15 +42,21 @@ public interface MemberMapper {
 
   MemberResponse toResponse(Member member);
 
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "userId", ignore = true)
-  @Mapping(target = "password", ignore = true)
-  @Mapping(target = "name", ignore = true)
-  @Mapping(target = "email", ignore = true)
-  @Mapping(target = "image", ignore = true)
-  @Mapping(target = "role", ignore = true)
-  @Mapping(target = "isActive", ignore = true)
-  @Mapping(target = "createdDate", ignore = true)
+  ResultResponse toResultResponse(boolean result, String message);
+
+  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   @Mapping(target = "refreshToken", source = "refreshToken")
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   Member updateMemberRefreshToken(Member updateMember, @MappingTarget Member member);
+
+  @Mapping(
+      source = "password",
+      target = "password",
+      qualifiedByName = "pwEncoder",
+      conditionExpression = "java(req.password() != null && !req.password().isEmpty())")
+  @Mapping(target = "refreshToken", ignore = true)
+  @Mapping(target = "createdDate", ignore = true)
+  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  void updateMember(MemberUpdateRequest req, @MappingTarget Member member) throws BaseException;
 }

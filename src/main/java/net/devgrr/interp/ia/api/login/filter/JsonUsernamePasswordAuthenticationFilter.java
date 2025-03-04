@@ -22,7 +22,7 @@ public class JsonUsernamePasswordAuthenticationFilter
   private static final String DEFAULT_LOGIN_REQUEST_URL = "/login";
   private static final String HTTP_METHOD = "POST";
   private static final String CONTENT_TYPE = "application/json";
-  private static final String USERID_KEY = "userId";
+  private static final String USER_EMAIL_KEY = "email";
   private static final String PASSWORD_KEY = "password";
 
   private static final AntPathRequestMatcher DEFAULT_LOGIN_PATH_REQUEST_MATCHER =
@@ -45,11 +45,11 @@ public class JsonUsernamePasswordAuthenticationFilter
     }
 
     String messageBody = StreamUtils.copyToString(request.getInputStream(), StandardCharsets.UTF_8);
-    Map<String, String> userIdPasswordMap =
+    Map<String, String> userEmailPasswordMap =
         objectMapper.readValue(messageBody, new TypeReference<>() {});
     UsernamePasswordAuthenticationToken authRequest =
         new UsernamePasswordAuthenticationToken(
-            userIdPasswordMap.get(USERID_KEY), userIdPasswordMap.get(PASSWORD_KEY));
+            userEmailPasswordMap.get(USER_EMAIL_KEY), userEmailPasswordMap.get(PASSWORD_KEY));
 
     return this.getAuthenticationManager().authenticate(authRequest);
   }

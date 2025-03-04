@@ -51,7 +51,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         .ifPresent(
             member ->
                 jwtService.sendAccessToken(
-                    response, jwtService.createAccessToken(member.getUserId())));
+                    response, jwtService.createAccessToken(member.getEmail())));
   }
 
   private void checkAccessTokenAndAuthentication(
@@ -62,7 +62,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
         .filter(jwtService::isTokenValid)
         .flatMap(
             accessToken ->
-                jwtService.extractUserId(accessToken).flatMap(memberRepository::findByUserId))
+                jwtService.extractUserId(accessToken).flatMap(memberRepository::findByEmail))
         .ifPresent(this::saveAuthentication);
 
     filterChain.doFilter(request, response);
@@ -71,7 +71,7 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
   private void saveAuthentication(Member member) {
     UserDetails user =
         User.builder()
-            .username(member.getUserId())
+            .username(member.getEmail())
             .password(member.getPassword())
             .roles(member.getRole().name())
             .build();

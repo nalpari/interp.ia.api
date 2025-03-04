@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
-import net.devgrr.interp.ia.api.member.dto.MemberRequest;
-import net.devgrr.interp.ia.api.member.dto.MemberResponse;
-import net.devgrr.interp.ia.api.member.dto.MemberValidationGroup;
+import net.devgrr.interp.ia.api.member.dto.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,9 +39,9 @@ public class MemberController {
   }
 
   @Operation(description = "사용자를 조회한다.")
-  @GetMapping("/{userId}")
-  public MemberResponse getUsersById(@PathVariable("userId") String userId) throws BaseException {
-    return memberMapper.toResponse(memberService.getUsersById(userId));
+  @GetMapping("/{email}")
+  public MemberResponse getUsersByEmail(@PathVariable("email") String email) throws BaseException {
+    return memberMapper.toResponse(memberService.getUsersByEmail(email));
   }
 
   @Operation(description = "사용자를 생성한다.")
@@ -54,15 +54,25 @@ public class MemberController {
     return memberMapper.toResponse(memberService.setUsers(req));
   }
 
-  /*
-   * TODO: 사용자 정보 수정 API 추가
-   * */
+  @Operation(description = "사용자의 정보를 수정한다.")
+  @PutMapping("/")
+  public MemberResponse putUsersById(
+      @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberUpdateRequest req,
+      @AuthenticationPrincipal UserDetails userDetails)
+      throws BaseException {
+    return memberMapper.toResponse(memberService.putUsersById(userDetails, req));
+  }
 
-  /*
-   * TODO: 사용자 비활성(삭제) API 추가
-   * */
+  @Operation(description = "사용자의 계정을 비활성화합니다.")
+  @PatchMapping("/{email}")
+  public ResultResponse delUsersByEmail(@PathVariable("email") String email) throws BaseException {
+    return memberService.delUsersByEmail(email);
+  }
 
-  /*
-   * TODO: 사용자 활성(복구) API 추가
-   * */
+  @Operation(description = "사용자의 계정을 활성화합니다.")
+  @PatchMapping("/active/{email}")
+  public ResultResponse putUsersActiveByEmail(@PathVariable("email") String email)
+      throws BaseException {
+    return memberService.putUsersActiveByEmail(email);
+  }
 }
