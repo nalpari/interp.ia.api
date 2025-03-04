@@ -20,10 +20,10 @@ public abstract class BaseEntity {
   @CreatedDate
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   @Schema(description = "생성 일자")
-  private LocalDateTime createdAt;
+  private LocalDateTime createdDate;
 
   @LastModifiedDate
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   @Schema(description = "수정 일자")
-  private LocalDateTime updatedAt;
+  private LocalDateTime updatedDate;
 }

@@ -16,6 +16,6 @@ public record MemberResponse(
     @Schema(description = "회원 전화번호") String phone,
     @Schema(description = "회원 활성 여부 (true: 활성, false: 비활성)") Boolean isActive,
     @Schema(description = "회원 생성 일자") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime createdAt,
+        LocalDateTime createdDate,
     @Schema(description = "회원 수정 일자") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime updatedAt) {}
+        LocalDateTime updatedDate) {}
