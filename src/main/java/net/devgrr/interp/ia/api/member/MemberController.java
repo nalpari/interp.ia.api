@@ -80,9 +80,7 @@ public class MemberController {
         throws BaseException {
         return memberService.delUsersByEmail(email);
     }
-    /*
-     * TODO: 사용자 활성(복구) API 추가
-     * */
+
     @Operation(description = "사용자의 계정을 활성화합니다.")
     @PatchMapping("/active/{email}")
     public ResultResponse putUsersActiveByEmail(@PathVariable("email") String email)
