@@ -65,20 +65,30 @@ public class MemberService {
         return member;
     }
 
-    @Transactional
-    public Member putUsersById(Long pkId, MemberRequest req) throws BaseException {
-        Member member = memberRepository.findById(pkId).orElseThrow(
-                () -> new BaseException(
-                        ErrorCode.NOT_FOUND, "회원을 찾을 수 없습니다."));
-//        Member updateMember = memberMapper.toMember(req);
-        memberMapper.updateMember(req, member);
-        try {
-            memberRepository.save(member);
-        } catch (Exception e) {
-            throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
-        }
-        return member;
+  @Transactional
+  public Member putUsersById(UserDetails userDetails, MemberUpdateRequest req)
+      throws BaseException {
+    Member member =
+        memberRepository
+            .findByEmail(userDetails.getUsername())
+            .orElseThrow(() -> new BaseException(ErrorCode.INVALID_INPUT_VALUE));
+
+    if (!member.getId().equals(req.id())) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보가 일치하지 않습니다.");
     }
+    if (StringUtils.hasText(req.email())) {
+      if (memberRepository.existsByEmail(req.email())) {
+        throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 존재하는 email 입니다.");
+      }
+    }
+    memberMapper.updateMember(req, member);
+    try {
+      memberRepository.save(member);
+    } catch (Exception e) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+    }
+    return member;
+  }
 
     @Transactional
     public ResultResponse delUsersByEmail(String email) throws BaseException {

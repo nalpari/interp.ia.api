@@ -66,13 +66,14 @@ public class MemberController {
         return memberMapper.toResponse(memberService.setUsers(req));
     }
 
-    @Operation(description = "사용자의 정보를 수정한다.")
-    @PutMapping("/{pkId}")
-    public MemberResponse putUsersById(@PathVariable("pkId") Long pkId,
-                                      @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberRequest req)
-            throws BaseException {
-        return memberMapper.toResponse(memberService.putUsersById(pkId, req));
-    }
+  @Operation(description = "사용자의 정보를 수정한다.")
+  @PutMapping("/")
+  public MemberResponse putUsersById(
+      @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberUpdateRequest req,
+      @AuthenticationPrincipal UserDetails userDetails)
+      throws BaseException {
+    return memberMapper.toResponse(memberService.putUsersById(userDetails, req));
+  }
 
     @Operation(description = "사용자의 계정을 비활성화합니다.")
     @PatchMapping("/{email}")

@@ -4,14 +4,11 @@ import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.member.MemberRole;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
+import net.devgrr.interp.ia.api.member.dto.MemberUpdateRequest;
 import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import net.devgrr.interp.ia.api.member.entity.Member;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import static java.time.LocalTime.now;
 
 // import org.mapstruct.factory.Mappers;
 
@@ -52,10 +49,14 @@ public interface MemberMapper {
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   Member updateMemberRefreshToken(Member updateMember, @MappingTarget Member member);
 
-  @Mapping(source = "password", target = "password", qualifiedByName = "pwEncoder")
-  @Mapping(target = "role", ignore = true)
+  @Mapping(
+      source = "password",
+      target = "password",
+      qualifiedByName = "pwEncoder",
+      conditionExpression = "java(req.password() != null && !req.password().isEmpty())")
   @Mapping(target = "refreshToken", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
-  void updateMember(MemberRequest req, @MappingTarget Member member) throws BaseException;
+  @Mapping(target = "createdDate", ignore = true)
+  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  void updateMember(MemberUpdateRequest req, @MappingTarget Member member) throws BaseException;
 }
