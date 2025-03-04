@@ -57,7 +57,7 @@ public class MemberService {
   }
 
   @Transactional
-  public Member putUsers(UserDetails userDetails, MemberUpdateRequest req)
+  public Member putUsersById(UserDetails userDetails, MemberUpdateRequest req)
       throws BaseException {
     Member member =
         memberRepository
@@ -82,7 +82,7 @@ public class MemberService {
   }
 
   @Transactional
-  public ResultResponse putUsersDeactivateByEmail(String email) throws BaseException {
+  public ResultResponse delUsersByEmail(String email) throws BaseException {
     boolean result = false;
 
     Member member =

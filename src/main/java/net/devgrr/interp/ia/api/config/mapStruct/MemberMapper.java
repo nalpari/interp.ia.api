@@ -54,6 +54,8 @@ public interface MemberMapper {
       target = "password",
       qualifiedByName = "pwEncoder",
       conditionExpression = "java(req.password() != null && !req.password().isEmpty())")
+  @Mapping(target = "refreshToken", ignore = true)
+  @Mapping(target = "createdDate", ignore = true)
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   void updateMember(MemberUpdateRequest req, @MappingTarget Member member) throws BaseException;
