@@ -47,18 +47,9 @@ public interface MemberMapper {
 
   ResultResponse toResultResponse(boolean result, String message);
 
-  @Mapping(target = "email", ignore = true)
-  @Mapping(target = "password", ignore = true)
-  @Mapping(target = "name", ignore = true)
-  @Mapping(target = "image", ignore = true)
-  @Mapping(target = "position", ignore = true)
-  @Mapping(target = "department", ignore = true)
-  @Mapping(target = "job", ignore = true)
-  @Mapping(target = "phone", ignore = true)
-  @Mapping(target = "role", ignore = true)
-  @Mapping(target = "isActive", ignore = true)
-  @Mapping(target = "createdDate", ignore = true)
+  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   @Mapping(target = "refreshToken", source = "refreshToken")
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   Member updateMemberRefreshToken(Member updateMember, @MappingTarget Member member);
 
   @Mapping(source = "password", target = "password", qualifiedByName = "pwEncoder")
