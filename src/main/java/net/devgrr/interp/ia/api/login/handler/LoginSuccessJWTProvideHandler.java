@@ -25,14 +25,14 @@ public class LoginSuccessJWTProvideHandler extends SimpleUrlAuthenticationSucces
   public void onAuthenticationSuccess(
       HttpServletRequest request, HttpServletResponse response, Authentication authentication)
       throws IOException, ServletException {
-    String userId = extractUsername(authentication);
-    String accessToken = jwtService.createAccessToken(userId);
+    String email = extractUsername(authentication);
+    String accessToken = jwtService.createAccessToken(email);
     String refreshToken = jwtService.createRefreshToken();
 
     jwtService.sendAccessAndRefreshToken(response, accessToken, refreshToken);
 
     memberRepository
-        .findByUserId(userId)
+        .findByEmail(email)
         .ifPresent(
             member ->
                 memberRepository.save(

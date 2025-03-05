@@ -30,8 +30,8 @@ public class Member extends BaseEntity {
   private Long id;
 
   @Column(nullable = false, unique = true)
-  @Schema(description = "회원 ID")
-  private String userId;
+  @Schema(description = "이메일")
+  private String email;
 
   @Column(nullable = false)
   @Schema(description = "비밀번호")
@@ -41,12 +41,23 @@ public class Member extends BaseEntity {
   @Schema(description = "이름")
   private String name;
 
-  @Column(nullable = false, unique = true)
-  @Schema(description = "이메일")
-  private String email;
-
   @Schema(description = "이미지")
   private String image;
+
+  @Column(nullable = false)
+  @Schema(description = "직급")
+  private String position;
+
+  @Column(nullable = false)
+  @Schema(description = "소속 부서")
+  private String department;
+
+  @Column(nullable = false)
+  @Schema(description = "직무")
+  private String job;
+
+  @Schema(description = "전화번호")
+  private String phone;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)

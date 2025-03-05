@@ -16,14 +16,14 @@ public class LoginService implements UserDetailsService {
   private final MemberRepository memberRepository;
 
   @Override
-  public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
     Member member =
         memberRepository
-            .findByUserId(userId)
+            .findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Not found user"));
 
     return User.builder()
-        .username(member.getUserId())
+        .username(member.getEmail())
         .password(member.getPassword())
         .roles(member.getRole().name())
         .build();
