@@ -9,20 +9,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import net.devgrr.interp.ia.api.member.MemberRole;
 import net.devgrr.interp.ia.api.model.entity.BaseEntity;
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @Entity
 @Table(name = "member")
 @Schema(description = "회원 엔티티")
-@AllArgsConstructor
 public class Member extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -72,5 +69,7 @@ public class Member extends BaseEntity {
   @Schema(description = "활성 여부 (true: 활성, false: 비활성)")
   private Boolean isActive;
 
-  public Member() {}
+  public Member() {
+      super();
+  }
 }
