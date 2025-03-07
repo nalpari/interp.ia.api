@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.member.dto.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
@@ -56,11 +58,12 @@ public class MemberController {
 
   @Operation(description = "사용자의 정보를 수정한다.")
   @PutMapping
-  public MemberResponse putUsers(
-      @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberUpdateRequest req,
+  public ResponseEntity<Object> putUsers(
+      @Valid @RequestBody MemberUpdateRequest req,
       @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
-    return memberMapper.toResponse(memberService.putUsers(userDetails, req));
+    memberService.putUsers(userDetails, req);
+    return ResponseEntity.ok().build();
   }
 
   @Operation(description = "사용자의 계정을 비활성화합니다.")
