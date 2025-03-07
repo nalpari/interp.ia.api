@@ -1,0 +1,18 @@
+-- CREATE TABLE IF NOT EXISTS `member`
+-- (
+--     id            BIGINT AUTO_INCREMENT,
+--     email         VARCHAR(255)          NOT NULL UNIQUE,
+--     password      VARCHAR(255)          NOT NULL,
+--     name          VARCHAR(255)          NOT NULL,
+--     image         VARCHAR(255),
+--     position      VARCHAR(255)          NOT NULL,
+--     department    VARCHAR(255)          NOT NULL,
+--     job           VARCHAR(255)          NOT NULL,
+--     phone         VARCHAR(255),
+--     role          ENUM ('ADMIN','USER') NOT NULL DEFAULT 'USER',
+--     refresh_token VARCHAR(1000),
+--     is_active     TINYINT(1)            NOT NULL DEFAULT 1,
+--     created_at    TIMESTAMP(6),
+--     updated_at    TIMESTAMP(6),
+--     PRIMARY KEY (id)
+-- );

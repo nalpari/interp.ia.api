@@ -9,9 +9,9 @@ public enum Priority {
   MEDIUM("Medium"), // 중간
   LOW("Low"); // 낮음
 
-  private final String description;
+  private final String value;
 
-  Priority(String description) {
-    this.description = description;
+  Priority(String value) {
+    this.value = value;
   }
 }

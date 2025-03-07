@@ -1,6 +1,8 @@
 package net.devgrr.interp.ia.api.member;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
@@ -41,6 +43,14 @@ public class MemberService {
     return member;
   }
 
+  public Set<Member> getUsersByIds(Set<Integer> ids) throws BaseException {
+    List<Member> members = memberRepository.findAllById(ids);
+    if (members.size() != ids.size()) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 회원 ID가 있습니다.");
+    }
+    return new HashSet<>(members);
+  }
+
   @Transactional
   public Member setUsers(MemberRequest req) throws BaseException {
     if (memberRepository.existsByEmail(req.email())) {
@@ -57,7 +67,7 @@ public class MemberService {
   }
 
   @Transactional
-  public Member putUsersById(UserDetails userDetails, MemberUpdateRequest req)
+  public Member putUsers(UserDetails userDetails, MemberUpdateRequest req)
       throws BaseException {
     Member member =
         memberRepository
@@ -82,7 +92,7 @@ public class MemberService {
   }
 
   @Transactional
-  public ResultResponse delUsersByEmail(String email) throws BaseException {
+  public ResultResponse putUsersDeactivateByEmail(String email) throws BaseException {
     boolean result = false;
 
     Member member =
