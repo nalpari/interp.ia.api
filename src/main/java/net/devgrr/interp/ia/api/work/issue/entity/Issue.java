@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -110,11 +111,11 @@ public class Issue {
 
   @OneToMany
   @Schema(description = "하위 이슈")
-  private List<Issue> subIssues;
+  private Set<Issue> subIssues;
 
   @OneToMany
   @Schema(description = "연관 이슈")
-  private List<Issue> relatedIssues;
+  private Set<Issue> relatedIssues;
 
   public Issue() {}
 }

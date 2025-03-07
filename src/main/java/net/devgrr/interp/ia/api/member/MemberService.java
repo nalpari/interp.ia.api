@@ -1,6 +1,8 @@
 package net.devgrr.interp.ia.api.member;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
@@ -39,6 +41,14 @@ public class MemberService {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 Email 입니다.");
     }
     return member;
+  }
+
+  public Set<Member> getUsersByIds(Set<Integer> ids) throws BaseException {
+    List<Member> members = memberRepository.findAllById(ids);
+    if (members.size() != ids.size()) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 회원 ID가 있습니다.");
+    }
+    return new HashSet<>(members);
   }
 
   @Transactional

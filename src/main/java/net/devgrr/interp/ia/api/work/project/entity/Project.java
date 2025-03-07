@@ -1,7 +1,9 @@
 package net.devgrr.interp.ia.api.work.project.entity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,7 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +28,7 @@ import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import net.devgrr.interp.ia.api.model.entity.BaseEntity;
 import net.devgrr.interp.ia.api.work.issue.entity.Issue;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Getter
 @Setter
@@ -34,6 +37,7 @@ import net.devgrr.interp.ia.api.work.issue.entity.Issue;
 @Table(name = "project")
 @Schema(description = "프로젝트 엔티티")
 @AllArgsConstructor
+@DynamicUpdate
 public class Project extends BaseEntity {
 
   @Id
@@ -70,7 +74,7 @@ public class Project extends BaseEntity {
       joinColumns = @JoinColumn(name = "project_id"),
       inverseJoinColumns = @JoinColumn(name = "member_id"))
   @Schema(description = "담당자")
-  private List<Member> assignee;
+  private Set<Member> assignee;
 
   @Schema(description = "기한일")
   private LocalDateTime dueDate;
@@ -85,8 +89,11 @@ public class Project extends BaseEntity {
   @Schema(description = "내용")
   private String description;
 
+  @ElementCollection
+  @CollectionTable(name = "project_tags", joinColumns = @JoinColumn(name = "project_id"))
+  @Column(name = "tag")
   @Schema(description = "태그")
-  private String tag;
+  private Set<String> tag;
 
   /*
    * TODO: 댓글 추가
@@ -95,15 +102,9 @@ public class Project extends BaseEntity {
   //  @Schema(description = "댓글")
   //  private List<IssueComment> comments;
 
-  /*
-   * TODO: 변경이력 추가
-   * */
-  //  @Schema(description = "변경이력")
-  //  private List<History> history;
-
   @OneToMany(mappedBy = "parentProject")
   @Schema(description = "하위 이슈")
-  private List<Issue> subIssues;
+  private Set<Issue> subIssues;
 
   public Project() {}
 }
