@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.mapStruct.HistoryMapper;
-import net.devgrr.interp.ia.api.work.history.entity.HistoryResponse;
+import net.devgrr.interp.ia.api.work.history.dto.HistoryResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
