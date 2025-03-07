@@ -55,7 +55,7 @@ public class MemberController {
   }
 
   @Operation(description = "사용자의 정보를 수정한다.")
-  @PutMapping("/")
+  @PutMapping
   public MemberResponse putUsers(
       @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberUpdateRequest req,
       @AuthenticationPrincipal UserDetails userDetails)
@@ -64,13 +64,14 @@ public class MemberController {
   }
 
   @Operation(description = "사용자의 계정을 비활성화합니다.")
-  @PatchMapping("/{email}")
-  public ResultResponse putUsersDeactivateByEmail(@PathVariable("email") String email) throws BaseException {
+  @PatchMapping("/{email}/deactivate")
+  public ResultResponse putUsersDeactivateByEmail(@PathVariable("email") String email)
+      throws BaseException {
     return memberService.putUsersDeactivateByEmail(email);
   }
 
   @Operation(description = "사용자의 계정을 활성화합니다.")
-  @PatchMapping("/active/{email}")
+  @PatchMapping("/{email}/activate")
   public ResultResponse putUsersActiveByEmail(@PathVariable("email") String email)
       throws BaseException {
     return memberService.putUsersActiveByEmail(email);
