@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -56,24 +57,21 @@ public class MemberController {
 
   @Operation(description = "사용자의 정보를 수정한다.")
   @PutMapping
-  public MemberResponse putUsers(
-      @Validated(MemberValidationGroup.createGroup.class) @RequestBody MemberUpdateRequest req,
-      @AuthenticationPrincipal UserDetails userDetails)
+  public void putUsers(
+      @Valid @RequestBody MemberUpdateRequest req, @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
-    return memberMapper.toResponse(memberService.putUsers(userDetails, req));
+    memberService.putUsers(userDetails, req);
   }
 
   @Operation(description = "사용자의 계정을 비활성화합니다.")
   @PatchMapping("/{email}/deactivate")
-  public ResultResponse putUsersDeactivateByEmail(@PathVariable("email") String email)
-      throws BaseException {
-    return memberService.putUsersDeactivateByEmail(email);
+  public void putUsersDeactivateByEmail(@PathVariable("email") String email) throws BaseException {
+    memberService.putUsersDeactivateByEmail(email);
   }
 
   @Operation(description = "사용자의 계정을 활성화합니다.")
   @PatchMapping("/{email}/activate")
-  public ResultResponse putUsersActiveByEmail(@PathVariable("email") String email)
-      throws BaseException {
-    return memberService.putUsersActiveByEmail(email);
+  public void putUsersActiveByEmail(@PathVariable("email") String email) throws BaseException {
+    memberService.putUsersActiveByEmail(email);
   }
 }

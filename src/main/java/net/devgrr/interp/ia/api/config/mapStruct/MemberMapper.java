@@ -5,12 +5,9 @@ import net.devgrr.interp.ia.api.member.MemberRole;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
 import net.devgrr.interp.ia.api.member.dto.MemberUpdateRequest;
-import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.mapstruct.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-
-// import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface MemberMapper {
@@ -42,8 +39,6 @@ public interface MemberMapper {
 
   MemberResponse toResponse(Member member);
 
-  ResultResponse toResultResponse(boolean result, String message);
-
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   @Mapping(target = "refreshToken", source = "refreshToken")
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -57,4 +52,12 @@ public interface MemberMapper {
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   void updateMember(MemberUpdateRequest req, @MappingTarget Member member) throws BaseException;
+
+  @Mapping(target = "isActive", expression = "java(false)")
+  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
+  Member deactivateMember(Member member);
+
+  @Mapping(target = "isActive", expression = "java(true)")
+  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
+  Member activeMember(Member member);
 }
