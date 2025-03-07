@@ -68,15 +68,17 @@ public class MemberController {
 
   @Operation(description = "사용자의 계정을 비활성화합니다.")
   @PatchMapping("/{email}/deactivate")
-  public ResultResponse putUsersDeactivateByEmail(@PathVariable("email") String email)
+  public ResponseEntity<Object> putUsersDeactivateByEmail(@PathVariable("email") String email)
       throws BaseException {
-    return memberService.putUsersDeactivateByEmail(email);
+    memberService.putUsersDeactivateByEmail(email);
+    return ResponseEntity.ok().build();
   }
 
   @Operation(description = "사용자의 계정을 활성화합니다.")
   @PatchMapping("/{email}/activate")
-  public ResultResponse putUsersActiveByEmail(@PathVariable("email") String email)
+  public ResponseEntity<Object> putUsersActiveByEmail(@PathVariable("email") String email)
       throws BaseException {
-    return memberService.putUsersActiveByEmail(email);
+    memberService.putUsersActiveByEmail(email);
+    return ResponseEntity.ok().build();
   }
 }
