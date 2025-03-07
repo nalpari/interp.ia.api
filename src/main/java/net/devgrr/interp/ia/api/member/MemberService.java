@@ -69,7 +69,8 @@ public class MemberService {
     Member member =
         memberRepository
             .findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보를 찾을 수 없습니다."));
+            .orElseThrow(
+                () -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보를 찾을 수 없습니다."));
 
     if (!member.getId().equals(req.id())) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보가 일치하지 않습니다.");
@@ -83,7 +84,7 @@ public class MemberService {
     try {
       memberRepository.save(member);
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :"+ e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :" + e.getMessage());
     }
   }
 
@@ -93,11 +94,6 @@ public class MemberService {
         memberRepository
             .findByEmail(email)
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
-
-    if (!member.getIsActive()) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 비활성화 된 회원입니다.");
-    }
-
     try {
       memberRepository.save(memberMapper.deactivateMember(member));
     } catch (Exception e) {
@@ -107,20 +103,15 @@ public class MemberService {
 
   @Transactional
   public void putUsersActiveByEmail(String email) throws BaseException {
-    boolean result = false;
-
     Member member =
         memberRepository
             .findByEmail(email)
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
 
-    if (member.getIsActive()) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 활성화 된 회원입니다.");
-    }
     try {
       memberRepository.save(memberMapper.activeMember(member));
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :"+e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :" + e.getMessage());
     }
   }
 }

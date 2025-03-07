@@ -12,7 +12,6 @@ import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.member.dto.*;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
@@ -58,27 +57,21 @@ public class MemberController {
 
   @Operation(description = "사용자의 정보를 수정한다.")
   @PutMapping
-  public ResponseEntity<Object> putUsers(
-      @Valid @RequestBody MemberUpdateRequest req,
-      @AuthenticationPrincipal UserDetails userDetails)
+  public void putUsers(
+      @Valid @RequestBody MemberUpdateRequest req, @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
     memberService.putUsers(userDetails, req);
-    return ResponseEntity.ok().build();
   }
 
   @Operation(description = "사용자의 계정을 비활성화합니다.")
   @PatchMapping("/{email}/deactivate")
-  public ResponseEntity<Object> putUsersDeactivateByEmail(@PathVariable("email") String email)
-      throws BaseException {
+  public void putUsersDeactivateByEmail(@PathVariable("email") String email) throws BaseException {
     memberService.putUsersDeactivateByEmail(email);
-    return ResponseEntity.ok().build();
   }
 
   @Operation(description = "사용자의 계정을 활성화합니다.")
   @PatchMapping("/{email}/activate")
-  public ResponseEntity<Object> putUsersActiveByEmail(@PathVariable("email") String email)
-      throws BaseException {
+  public void putUsersActiveByEmail(@PathVariable("email") String email) throws BaseException {
     memberService.putUsersActiveByEmail(email);
-    return ResponseEntity.ok().build();
   }
 }
