@@ -9,7 +9,6 @@ import net.devgrr.interp.ia.api.config.exception.ErrorCode;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberUpdateRequest;
-import net.devgrr.interp.ia.api.member.dto.ResultResponse;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -56,7 +55,6 @@ public class MemberService {
     if (memberRepository.existsByEmail(req.email())) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 존재하는 Email 입니다.");
     }
-
     Member member = memberMapper.toMember(req);
     try {
       memberRepository.save(member);
@@ -67,12 +65,11 @@ public class MemberService {
   }
 
   @Transactional
-  public Member putUsers(UserDetails userDetails, MemberUpdateRequest req)
-      throws BaseException {
+  public void putUsers(UserDetails userDetails, MemberUpdateRequest req) throws BaseException {
     Member member =
         memberRepository
             .findByEmail(userDetails.getUsername())
-            .orElseThrow(() -> new BaseException(ErrorCode.INVALID_INPUT_VALUE));
+            .orElseThrow(() -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보를 찾을 수 없습니다."));
 
     if (!member.getId().equals(req.id())) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보가 일치하지 않습니다.");
@@ -86,33 +83,30 @@ public class MemberService {
     try {
       memberRepository.save(member);
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :"+ e.getMessage());
     }
-    return member;
   }
 
   @Transactional
-  public ResultResponse putUsersDeactivateByEmail(String email) throws BaseException {
-    boolean result = false;
-
+  public void putUsersDeactivateByEmail(String email) throws BaseException {
     Member member =
         memberRepository
             .findByEmail(email)
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
 
     if (!member.getIsActive()) {
-      return memberMapper.toResultResponse(result, "이미 비활성화 된 회원입니다.");
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 비활성화 된 회원입니다.");
     }
+
     try {
-      if (memberRepository.deactivateByEmail(member.getEmail()) == 1) result = true;
+      memberRepository.save(memberMapper.deactivateMember(member));
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :" + e.getMessage());
     }
-    return memberMapper.toResultResponse(result, "회원 비활성화");
   }
 
   @Transactional
-  public ResultResponse putUsersActiveByEmail(String email) throws BaseException {
+  public void putUsersActiveByEmail(String email) throws BaseException {
     boolean result = false;
 
     Member member =
@@ -121,13 +115,12 @@ public class MemberService {
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
 
     if (member.getIsActive()) {
-      return memberMapper.toResultResponse(result, "활성화 되어있는 회원입니다.");
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 활성화 된 회원입니다.");
     }
     try {
-      if (memberRepository.activeByEmail(member.getEmail()) == 1) result = true;
+      memberRepository.save(memberMapper.activeMember(member));
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :"+e.getMessage());
     }
-    return memberMapper.toResultResponse(result, "회원 활성화");
   }
 }
