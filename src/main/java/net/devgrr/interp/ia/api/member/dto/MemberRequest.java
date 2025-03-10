@@ -20,10 +20,10 @@ public record MemberRequest(
     @Schema(description = "직급")
         @NotBlank(message = "필수값: position", groups = MemberValidationGroup.createGroup.class)
         String position,
-    @Schema(description = "직급")
+    @Schema(description = "부서")
         @NotBlank(message = "필수값: department", groups = MemberValidationGroup.createGroup.class)
         String department,
-    @Schema(description = "직급")
+    @Schema(description = "직무")
         @NotBlank(message = "필수값: job", groups = MemberValidationGroup.createGroup.class)
         String job,
     @Schema(description = "전화번호") String phone,
