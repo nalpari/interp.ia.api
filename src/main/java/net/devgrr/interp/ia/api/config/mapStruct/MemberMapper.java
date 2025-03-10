@@ -55,9 +55,9 @@ public interface MemberMapper {
 
   @Mapping(target = "isActive", expression = "java(false)")
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
-  Member deactivateMember(Member member);
+  void deactivateMember(Member source, @MappingTarget Member member);
 
   @Mapping(target = "isActive", expression = "java(true)")
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
-  Member activeMember(Member member);
+  void activeMember(Member source, @MappingTarget Member member);
 }
