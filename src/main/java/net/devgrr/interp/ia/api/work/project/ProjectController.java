@@ -142,18 +142,18 @@ public class ProjectController {
 
           수정할 필드명은 key, 수정 데이터는 value의 JSON 형태로 입력한다.
 
-          key 목록
-          - title (제목)
-          - subTitle (부제목)
-          - status (상태)
-          - priority (중요도)
-          - assigneeId (담당자 ID)
-          - dueDate (기한일)
-          - startDate (시작일)
-          - endDate (종료일)
-          - description (내용)
-          - tag (태그)
-          - subIssuesId (하위 이슈 ID)
+          key 목록 및 value 타입
+          - title (제목) - String
+          - subTitle (부제목) - String
+          - status (상태) - String
+          - priority (중요도) - String
+          - assigneeId (담당자 ID) - List<Integer>
+          - dueDate (기한일) - String (format: yyyy-MM-dd)
+          - startDate (시작일) - String (format: yyyy-MM-dd)
+          - endDate (종료일) - String (format: yyyy-MM-dd)
+          - description (내용) - String
+          - tag (태그) - List<String>
+          - subIssuesId (하위 이슈 ID) - List<Integer>
           """,
       requestBody =
           @io.swagger.v3.oas.annotations.parameters.RequestBody(
