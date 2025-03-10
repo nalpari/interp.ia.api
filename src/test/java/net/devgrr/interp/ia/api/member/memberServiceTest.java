@@ -25,6 +25,7 @@ public class memberServiceTest {
 
     @BeforeEach
     void setUp() {
+      // given
       member =
           Member.builder()
               .email("test@test.com")
@@ -43,36 +44,51 @@ public class memberServiceTest {
     }
 
     @Nested
-    @DisplayName("정상 케이스")
+    @DisplayName("성공 케이스")
     class SuccessTest {
       @Test
       @DisplayName("회원가입 성공")
-      public void success() throws BaseException {
+      public void setUsersTest() throws BaseException {
+        // mock 설정
         when(memberRepository.existsByEmail(memberRequest.email())).thenReturn(Boolean.FALSE);
         when(memberMapper.toMember(memberRequest)).thenReturn(member);
         when(memberRepository.save(member)).thenReturn(member);
 
+        // Service 생성
         MemberService memberService = new MemberService(memberRepository, memberMapper);
+        // when
         Member result = memberService.setUsers(memberRequest);
 
+        // then
         Assertions.assertEquals(member, result);
       }
     }
     @Nested
-    @DisplayName("비정상 케이스")
+    @DisplayName("실패 케이스")
     class FailTest {
       @Test
       @DisplayName("중복 이메일로 회원가입을 시도한 경우")
-      public void SignupToDuplicateEmail() {
-        member.setEmail("user1@naver.com");
-
+      public void SignupToDuplicateEmailTest() {
+        // mock 설정
         when(memberRepository.existsByEmail(memberRequest.email())).thenReturn(Boolean.TRUE);
 
         MemberService memberService = new MemberService(memberRepository, memberMapper);
-
         BaseException exception = assertThrows(BaseException.class, () -> memberService.setUsers(memberRequest));
 
         Assertions.assertEquals("이미 존재하는 Email 입니다.", exception.getMessage());
+      }
+      @Test
+      @DisplayName("Repository 에 Member 객체 저장이 실패한 경우")
+      public void failToSignupTest() {
+        // mock 설정
+        when(memberRepository.existsByEmail(memberRequest.email())).thenReturn(Boolean.FALSE);
+        // memberRepository.save 의 반환값이 null -> 객체 저장에 실패함
+        when(memberRepository.save(member)).thenReturn(null);
+
+        MemberService memberService = new MemberService(memberRepository, memberMapper);
+        BaseException exception = assertThrows(BaseException.class, () -> memberService.setUsers(memberRequest));
+
+        Assertions.assertEquals("회원가입에 실패했습니다.", exception.getMessage());
       }
     }
   }
