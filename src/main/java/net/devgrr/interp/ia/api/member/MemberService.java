@@ -13,7 +13,6 @@ import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @RequiredArgsConstructor
 @Service
@@ -59,7 +58,7 @@ public class MemberService {
     try {
       memberRepository.save(member);
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "회원가입에 실패했습니다.");
     }
     return member;
   }
