@@ -26,6 +26,11 @@ public interface ProjectMapper {
     return Priority.valueOf(priority);
   }
 
+  @Named("toDate")
+  static LocalDateTime toDate(LocalDateTime date) {
+    return date.equals(LocalDateTime.MIN) ? null : date;
+  }
+
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "subIssues", ignore = true)
   @Mapping(
@@ -51,13 +56,13 @@ public interface ProjectMapper {
   @Mapping(target = "subTitle", source = "subTitle")
   Project putProjectSubTitle(@MappingTarget Project project, String subTitle);
 
-  @Mapping(target = "dueDate", source = "dueDate")
+  @Mapping(target = "dueDate", source = "dueDate", qualifiedByName = "toDate")
   Project putProjectDueDate(@MappingTarget Project project, LocalDateTime dueDate);
 
-  @Mapping(target = "startDate", source = "startDate")
+  @Mapping(target = "startDate", source = "startDate", qualifiedByName = "toDate")
   Project putProjectStartDate(@MappingTarget Project project, LocalDateTime startDate);
 
-  @Mapping(target = "endDate", source = "endDate")
+  @Mapping(target = "endDate", source = "endDate", qualifiedByName = "toDate")
   Project putProjectEndDate(@MappingTarget Project project, LocalDateTime endDate);
 
   @Mapping(target = "description", source = "description")

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
@@ -142,8 +143,8 @@ public class ProjectService {
       Object value = req.values().iterator().next();
       Project saveProject = updateProjectField(originProject, key, value, history);
 
+      /* MEMO: 이전 데이터와의 변경 여부는 Front 에서 처리 후 넘어오기 때문에 값 변경 validation 처리 생략하고 업데이트 */
       projectRepository.save(saveProject);
-      /* TODO: project save(update)가 수행되었을 때만 history save 하도록 처리 추가 필요 */
       historyService.setHistory(history.build());
 
     } catch (Exception e) {
@@ -151,83 +152,96 @@ public class ProjectService {
     }
   }
 
-  /* TODO: null 일 경우의 처리 추가 필요 */
   private Project updateProjectField(
       Project originProject, String key, Object value, HistoryBuilder history)
       throws BaseException {
-    Project saveProject = null;
-    switch (key) {
-      case "status":
-        String originStatus = originProject.getStatus().toString();
-        IssueStatus status = IssueStatus.valueOf(value.toString());
-        saveProject = projectMapper.putProjectStatus(originProject, status);
-        history.fieldName(key).beforeValue(originStatus).afterValue(status.toString());
-        break;
-      case "priority":
-        String originPriority = originProject.getPriority().toString();
-        Priority priority = Priority.valueOf(value.toString());
-        saveProject = projectMapper.putProjectPriority(originProject, priority);
-        history.fieldName(key).beforeValue(originPriority).afterValue(priority.toString());
-        break;
-      case "title":
-        String originTitle = originProject.getTitle();
-        saveProject = projectMapper.putProjectTitle(originProject, value.toString());
-        history.fieldName(key).beforeValue(originTitle).afterValue(value.toString());
-        break;
-      case "subTitle":
-        String originSubTitle = originProject.getSubTitle();
-        saveProject = projectMapper.putProjectSubTitle(originProject, value.toString());
-        history.fieldName(key).beforeValue(originSubTitle).afterValue(value.toString());
-        break;
-      case "assignee":
-        String originAssignee =
-            originProject.getAssignee().stream().map(Member::getId).toList().toString();
-        Set<Member> assignee = memberService.getUsersByIds(new HashSet<>((List<Integer>) value));
-        saveProject = projectMapper.putProjectAssignee(originProject, 0, assignee);
-        history
-            .fieldName(key)
-            .beforeValue(originAssignee)
-            .afterValue(assignee.stream().map(Member::getId).toList().toString());
-        break;
-      case "dueDate":
-        String originDueDate = originProject.getDueDate().toString();
-        LocalDateTime dueDate =
-            LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                .atStartOfDay();
-        saveProject = projectMapper.putProjectDueDate(originProject, dueDate);
-        history.fieldName(key).beforeValue(originDueDate).afterValue(dueDate.toString());
-        break;
-      case "startDate":
-        String originStartDate = originProject.getStartDate().toString();
-        LocalDateTime startDate =
-            LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                .atStartOfDay();
-        saveProject = projectMapper.putProjectStartDate(originProject, startDate);
-        history.fieldName(key).beforeValue(originStartDate).afterValue(startDate.toString());
-        break;
-      case "endDate":
-        String originEndDate = originProject.getEndDate().toString();
-        LocalDateTime endDate =
-            LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                .atStartOfDay();
-        saveProject = projectMapper.putProjectEndDate(originProject, endDate);
-        history.fieldName(key).beforeValue(originEndDate).afterValue(endDate.toString());
-        break;
-      case "description":
-        String originDescription = originProject.getDescription();
-        saveProject = projectMapper.putProjectDescription(originProject, value.toString());
-        history.fieldName(key).beforeValue(originDescription).afterValue(value.toString());
-        break;
-      case "tag":
-        String originTag = originProject.getTag().toString();
-        saveProject =
-            projectMapper.putProjectTag(originProject, 0, new HashSet<>((List<String>) value));
-        history.fieldName(key).beforeValue(originTag).afterValue(value.toString());
-        break;
-      default:
-        break;
+    try {
+      Project saveProject = null;
+      switch (key) {
+        case "status":
+          String originStatus = Objects.toString(originProject.getStatus(), null);
+          IssueStatus status = IssueStatus.valueOf(value.toString());
+          saveProject = projectMapper.putProjectStatus(originProject, status);
+          history.fieldName(key).beforeValue(originStatus).afterValue(status.toString());
+          break;
+        case "priority":
+          String originPriority = Objects.toString(originProject.getPriority(), null);
+          Priority priority = Priority.valueOf(value.toString());
+          saveProject = projectMapper.putProjectPriority(originProject, priority);
+          history.fieldName(key).beforeValue(originPriority).afterValue(priority.toString());
+          break;
+        case "title":
+          String originTitle = originProject.getTitle();
+          saveProject = projectMapper.putProjectTitle(originProject, value.toString());
+          history.fieldName(key).beforeValue(originTitle).afterValue(value.toString());
+          break;
+        case "subTitle":
+          String originSubTitle = Objects.toString(originProject.getSubTitle(), null);
+          String subTitle = Objects.toString(value, null);
+          saveProject = projectMapper.putProjectSubTitle(originProject, subTitle);
+          history.fieldName(key).beforeValue(originSubTitle).afterValue(subTitle);
+          break;
+        case "assignee":
+          String originAssignee =
+              Objects.toString(
+                  originProject.getAssignee().stream().map(Member::getId).toList(), null);
+          Set<Member> assignee =
+              value != null
+                  ? memberService.getUsersByIds(new HashSet<>((List<Integer>) value))
+                  : null;
+          saveProject = projectMapper.putProjectAssignee(originProject, 0, assignee);
+          history
+              .fieldName(key)
+              .beforeValue(originAssignee)
+              .afterValue(Objects.toString(assignee.stream().map(Member::getId).toList(), null));
+          break;
+        case "dueDate":
+        case "startDate":
+        case "endDate":
+          String originDate = Objects.toString(originProject.getEndDate(), null);
+          LocalDateTime newDate =
+              value != null
+                  ? LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                      .atStartOfDay()
+                  : LocalDateTime.MIN;
+          saveProject = updateProjectDateField(originProject, key, newDate);
+          history
+              .fieldName(key)
+              .beforeValue(originDate)
+              .afterValue(Objects.toString(newDate, null));
+          break;
+        case "description":
+          String originDescription = Objects.toString(originProject.getDescription(), null);
+          String subDescription = Objects.toString(value, null);
+          saveProject = projectMapper.putProjectDescription(originProject, subDescription);
+          history.fieldName(key).beforeValue(originDescription).afterValue(subDescription);
+          break;
+        case "tag":
+          String originTag = Objects.toString(originProject.getTag(), null);
+          Set<String> tag = value != null ? new HashSet<>((List<String>) value) : null;
+          saveProject = projectMapper.putProjectTag(originProject, 0, tag);
+          history.fieldName(key).beforeValue(originTag).afterValue(Objects.toString(tag, null));
+          break;
+        default:
+          throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
+      }
+      return saveProject;
+    } catch (Exception e) {
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-    return saveProject;
+  }
+
+  private Project updateProjectDateField(Project project, String key, LocalDateTime date) {
+    switch (key) {
+      case "dueDate":
+        return projectMapper.putProjectDueDate(project, date);
+      case "startDate":
+        return projectMapper.putProjectStartDate(project, date);
+      case "endDate":
+        return projectMapper.putProjectEndDate(project, date);
+      default:
+        return null;
+    }
   }
 
   @Transactional
