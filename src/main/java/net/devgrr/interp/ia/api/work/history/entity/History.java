@@ -35,9 +35,11 @@ public class History {
   @Schema(description = "고유 ID")
   private Long id;
 
+  @Column(nullable = false)
   @Schema(description = "이슈 ID")
   private Long issueId;
 
+  @Column(nullable = false)
   @Schema(description = "필드")
   private String fieldName;
 
@@ -55,7 +57,7 @@ public class History {
   private LocalDateTime modifiedDate;
 
   @ManyToOne
-  @JoinColumn(name = "modifier_id")
+  @JoinColumn(name = "modifier_id", nullable = false)
   @Schema(description = "수정자")
   private Member modifier;
 
