@@ -55,9 +55,9 @@ public interface MemberMapper {
 
   @Mapping(target = "isActive", expression = "java(false)")
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
-  void deactivateMember(Member source, @MappingTarget Member member);
+  void deactivateMember(Member source, @MappingTarget Member member) throws BaseException;
 
   @Mapping(target = "isActive", expression = "java(true)")
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
-  void activeMember(Member source, @MappingTarget Member member);
+  void activeMember(Member source, @MappingTarget Member member) throws BaseException;
 }
