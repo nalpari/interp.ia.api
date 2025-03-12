@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "파일 단위의 회원 요청")
-public class MemberCsvRequest {
+public class MemberForFileRequest {
   @Schema(description = "이메일")
   @Email(message = "유효하지 않은 이메일 형식입니다.", groups = MemberValidationGroup.class)
   @NotBlank(message = "필수값 : email", groups = MemberValidationGroup.class)
@@ -51,7 +51,7 @@ public class MemberCsvRequest {
   private String role;
 
   public static List<String> getFields() {
-    Field[] fields = MemberCsvRequest.class.getDeclaredFields();
+    Field[] fields = MemberForFileRequest.class.getDeclaredFields();
     List<String> list = new ArrayList<>();
     for(Field f : fields) {
       list.add(f.getName());
