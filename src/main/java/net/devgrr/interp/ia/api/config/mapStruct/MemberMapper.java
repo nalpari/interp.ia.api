@@ -2,6 +2,7 @@ package net.devgrr.interp.ia.api.config.mapStruct;
 
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.member.MemberRole;
+import net.devgrr.interp.ia.api.member.dto.MemberCsvRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
 import net.devgrr.interp.ia.api.member.dto.MemberUpdateRequest;
@@ -36,6 +37,11 @@ public interface MemberMapper {
   @Mapping(source = "role", target = "role", qualifiedByName = "toMemberRole")
   @Mapping(target = "isActive", expression = "java(true)")
   Member toMember(MemberRequest memberRequest);
+
+  @Mapping(source = "password", target = "password", qualifiedByName = "pwEncoder")
+  @Mapping(source = "role", target = "role", qualifiedByName = "toMemberRole")
+  @Mapping(target = "isActive", expression = "java(true)")
+  Member toMember(MemberCsvRequest memberCsvRequest);
 
   MemberResponse toResponse(Member member);
 
