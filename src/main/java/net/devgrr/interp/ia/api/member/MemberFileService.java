@@ -53,12 +53,26 @@ public class MemberFileService {
     deleteFile(savedFile);
   }
 
-  public File downloadMemberFile() throws JobExecutionException, BaseException {
+  public File downloadMemberFile(String fileType) throws JobExecutionException, BaseException {
     createDirectory();
 
     LocalDate today = LocalDate.now();
+    String extension = "";
+    if (fileType.isBlank()) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "확장자 입력이 없습니다.");
+    }
+    if ("csv".equals(fileType)) {
+      extension = ".csv";
+    }
+    if ("xlsx".equals(fileType)) {
+      extension = ".xlsx";
+    }
+    if ("xls".equals(fileType)) {
+      extension = ".xls";
+    }
+
     String fileName =
-        "Member_data_" + today.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".csv";
+        "Member_data_" + today.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + extension;
     String filePath = FILE_DIRECTORY + fileName;
     JobParameters jobParameters =
         new JobParametersBuilder()

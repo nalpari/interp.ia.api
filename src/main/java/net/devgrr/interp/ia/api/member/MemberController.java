@@ -84,18 +84,21 @@ public class MemberController {
     memberService.putUsersActiveByEmail(email);
   }
 
-  @Operation(description = ".csv 파일을 입력받아 데이터를 저장한다.")
+  @Operation(description = "파일을 입력받아 데이터를 저장한다." + "<br>확장자가 .csv, .xlsx, .xls 인 것만 가능"
+  +"<br> ")
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public void uploadMemberFile(@RequestPart("file") MultipartFile file)
       throws IOException, JobExecutionException, BaseException {
     memberFileService.uploadMemberFile(file);
   }
 
-  @Operation(description = "모든 회원 정보를 .csv 파일로 내려받는다.")
+  @Operation(description = "모든 회원 정보를 파일로 내려받는다." + "<br>csv 파일과 엑셀 파일 중 선택")
   @GetMapping("/download")
-  public ResponseEntity<FileSystemResource> downloadMemberFile()
+  public ResponseEntity<FileSystemResource> downloadMemberFile(
+      @RequestParam("fileType") @Parameter(description = "csv = .csv 파일 | xlsx = .xlsx 파일 | xls = .xls 파일")
+          String fileType)
       throws JobExecutionException, BaseException {
-    File file = memberFileService.downloadMemberFile();
+    File file = memberFileService.downloadMemberFile(fileType);
     FileSystemResource resource = new FileSystemResource(file);
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName())

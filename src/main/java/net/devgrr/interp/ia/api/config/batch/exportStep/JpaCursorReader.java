@@ -1,4 +1,4 @@
-package net.devgrr.interp.ia.api.config.file;
+package net.devgrr.interp.ia.api.config.batch.exportStep;
 
 import jakarta.persistence.EntityManagerFactory;
 import net.devgrr.interp.ia.api.member.entity.Member;

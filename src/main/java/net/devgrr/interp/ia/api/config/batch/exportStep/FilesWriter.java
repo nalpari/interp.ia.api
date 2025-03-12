@@ -1,7 +1,8 @@
-package net.devgrr.interp.ia.api.config.file;
+package net.devgrr.interp.ia.api.config.batch.exportStep;
 
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
@@ -11,10 +12,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 
 @Configuration
-public class CsvWriter {
+public class FilesWriter {
   @Bean
   @StepScope
-  public FlatFileItemWriter<Member> writer(@Value("#{jobParameters['filePath']}") String filePath) {
+  public ItemStreamWriter<Member> fileWriter(@Value("#{jobParameters['filePath']}") String filePath) {
+    if(filePath.endsWith(".csv")) {
+      return csvWriter(filePath);
+    } else if(filePath.endsWith(".xlsx")) {
+      return exelWriter(filePath, true);
+    } else if(filePath.endsWith(".xls")){
+      return exelWriter(filePath, false);
+    } else{
+      throw new IllegalArgumentException("Unsupported file type: " + filePath);
+    }
+  }
+  private ItemStreamWriter<Member> exelWriter(String filePath, boolean isXlsx) {
+    ExelWriter<Member> writer = new ExelWriter<>(Member.class);
+    writer.setResource(new FileSystemResource(filePath));
+    writer.setXlsx(isXlsx);
+
+    return writer;
+  }
+
+  public FlatFileItemWriter<Member> csvWriter(String filePath) {
     FlatFileItemWriter<Member> writer = new FlatFileItemWriter<>();
     writer.setResource(new FileSystemResource(filePath));
 
