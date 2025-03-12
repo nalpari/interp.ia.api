@@ -2,6 +2,8 @@ package net.devgrr.interp.ia.api.config.exception;
 
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.jdbc.BatchFailedException;
+import org.springframework.batch.core.JobExecutionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -57,5 +59,17 @@ public class GlobalExceptionHandler {
       return ResponseEntity.internalServerError()
           .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
     }
+  }
+
+  @ExceptionHandler(BatchFailedException.class)
+  protected ResponseEntity<ErrorResponse> handle(BatchFailedException e) {
+    return ResponseEntity.internalServerError()
+        .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
+  }
+
+  @ExceptionHandler(JobExecutionException.class)
+  protected ResponseEntity<ErrorResponse> handle(JobExecutionException e) {
+    return ResponseEntity.internalServerError()
+        .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
   }
 }
