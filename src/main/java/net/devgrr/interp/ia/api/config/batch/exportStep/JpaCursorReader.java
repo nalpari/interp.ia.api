@@ -11,7 +11,9 @@ public class JpaCursorReader {
     @Bean
     public JpaCursorItemReader<Member> jpaCursorItemReader(EntityManagerFactory emf) {
         JpaCursorItemReader<Member> reader = new JpaCursorItemReader<>();
+//        Jpa DB 접근
         reader.setEntityManagerFactory(emf);
+//        Member 테이블 전체 읽음
         reader.setQueryString("select m from Member m");
 
         return reader;

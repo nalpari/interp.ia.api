@@ -15,6 +15,7 @@ public class JpaWriter {
   @StepScope
   public JpaItemWriter<Member> jpaItemWriter(EntityManagerFactory em) {
     JpaItemWriter<Member> writer = new JpaItemWriter<>();
+//    Jpa DB 접근하여 작성
     writer.setEntityManagerFactory(em);
     return writer;
   }

@@ -17,6 +17,7 @@ public class ItemsProcessor {
   @Bean
   @StepScope
   public ItemProcessor<MemberForFileRequest, Member> itemProcessor() {
+//    MemberForFileRequest -> Member 변환
       return memberMapper::toMember;
   }
 }

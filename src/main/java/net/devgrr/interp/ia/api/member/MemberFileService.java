@@ -38,18 +38,20 @@ public class MemberFileService {
       throws IOException, JobExecutionException, BaseException {
     createDirectory();
 
+//    upload 한 파일 읽기 위해 서버에 저장
     String filePath = FILE_DIRECTORY + file.getOriginalFilename();
     File savedFile = new File(filePath);
     file.transferTo(savedFile);
 
+//    batch step 에 동적으로 파일 위치 지정
     JobParameters jobParameter =
         new JobParametersBuilder()
             .addString("filePath", savedFile.getAbsolutePath())
             .addLong("time", System.currentTimeMillis())
             .toJobParameters();
-
+//    batch job 실행
     jobLauncher.run(importMemberJob, jobParameter);
-
+//    db 에 data 저장된 후 파일 삭제
     deleteFile(savedFile);
   }
 
@@ -71,13 +73,15 @@ public class MemberFileService {
       extension = ".xls";
     }
 
+//    resource 를 클라이언트에게 전송하기 전 서버에 먼저 저장하기 위해 path 선언
     String fileName =
         "Member_data_" + today.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + extension;
     String filePath = FILE_DIRECTORY + fileName;
+
+//    job step 에 동적으로 파일 저장 위치 지정
     JobParameters jobParameters =
         new JobParametersBuilder()
             .addString("filePath", filePath)
-            .addLong("time", System.currentTimeMillis())
             .toJobParameters();
 
     jobLauncher.run(exportMemberJob, jobParameters);
