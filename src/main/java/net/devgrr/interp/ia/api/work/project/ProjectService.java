@@ -1,10 +1,13 @@
 package net.devgrr.interp.ia.api.work.project;
 
-import jakarta.persistence.criteria.Predicate;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.DateTimePath;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.impl.JPAUpdateClause;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,8 @@ import net.devgrr.interp.ia.api.work.history.entity.History;
 import net.devgrr.interp.ia.api.work.history.entity.History.HistoryBuilder;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
+import net.devgrr.interp.ia.api.work.project.entity.QProject;
+import net.devgrr.interp.ia.api.work.project.entity.QProjectAssignee;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +38,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectService {
 
   private final ProjectRepository projectRepository;
+  private final JPAQueryFactory queryFactory;
   private final ProjectMapper projectMapper;
   private final MemberService memberService;
   private final HistoryService historyService;
+
+  private final QProject qProject = QProject.project;
+  private final QProjectAssignee qProjectAssignee = QProjectAssignee.projectAssignee;
 
   public List<Project> getProjects() {
     return projectRepository.findAll();
@@ -46,63 +55,59 @@ public class ProjectService {
       String priority,
       String title,
       String subTitle,
-      String creator,
-      String assignee,
-      LocalDateTime createdDate,
-      LocalDateTime updatedDate,
-      LocalDateTime dueDate,
-      LocalDateTime startDate,
-      LocalDateTime endDate,
+      Long creatorId,
+      List<Long> assigneeId,
+      LocalDate createdDate,
+      LocalDate updatedDate,
+      LocalDate dueDate,
+      LocalDate startDate,
+      LocalDate endDate,
       Set<String> tag)
       throws BaseException {
     try {
-      return projectRepository.findAll(
-          (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
+      BooleanBuilder builder = new BooleanBuilder();
 
-            if (status != null && !status.trim().isEmpty()) {
-              predicates.add(criteriaBuilder.equal(root.get("status"), status));
-            }
-            if (priority != null && !priority.trim().isEmpty()) {
-              predicates.add(criteriaBuilder.equal(root.get("priority"), priority));
-            }
-            if (title != null && !title.trim().isEmpty()) {
-              predicates.add(criteriaBuilder.like(root.get("title"), "%" + title + "%"));
-            }
-            if (subTitle != null && !subTitle.trim().isEmpty()) {
-              predicates.add(criteriaBuilder.like(root.get("subTitle"), "%" + subTitle + "%"));
-            }
-            if (creator != null && !creator.trim().isEmpty()) {
-              predicates.add(criteriaBuilder.equal(root.get("creator").get("name"), creator));
-            }
-            if (assignee != null && !assignee.trim().isEmpty()) {
-              predicates.add(criteriaBuilder.equal(root.join("assignee").get("name"), assignee));
-            }
-            if (createdDate != null && !createdDate.equals(LocalDateTime.MIN)) {
-              predicates.add(criteriaBuilder.equal(root.get("createdDate"), createdDate));
-            }
-            if (updatedDate != null && !updatedDate.equals(LocalDateTime.MIN)) {
-              predicates.add(criteriaBuilder.equal(root.get("updatedDate"), updatedDate));
-            }
-            if (dueDate != null && !dueDate.equals(LocalDateTime.MIN)) {
-              predicates.add(criteriaBuilder.equal(root.get("dueDate"), dueDate));
-            }
-            if (startDate != null && !startDate.equals(LocalDateTime.MIN)) {
-              predicates.add(criteriaBuilder.equal(root.get("startDate"), startDate));
-            }
-            if (endDate != null && !endDate.equals(LocalDateTime.MIN)) {
-              predicates.add(criteriaBuilder.equal(root.get("endDate"), endDate));
-            }
-            if (tag != null && !tag.isEmpty()) {
-              predicates.add(
-                  criteriaBuilder.or(
-                      tag.stream()
-                          .map(t -> criteriaBuilder.like(root.get("tag"), "%" + t + "%"))
-                          .toArray(Predicate[]::new)));
-            }
+      if (status != null && !status.trim().isEmpty()) {
+        builder.and(qProject.status.eq(IssueStatus.valueOf(status)));
+      }
+      if (priority != null && !priority.trim().isEmpty()) {
+        builder.and(qProject.priority.eq(Priority.valueOf(priority)));
+      }
+      if (title != null && !title.trim().isEmpty()) {
+        builder.and(qProject.title.like("%" + title + "%"));
+      }
+      if (subTitle != null && !subTitle.trim().isEmpty()) {
+        builder.and(qProject.subTitle.like("%" + subTitle + "%"));
+      }
+      if (creatorId != null && creatorId > 0) {
+        builder.and(qProject.creator.id.eq(creatorId));
+      }
+      if (assigneeId != null && !assigneeId.isEmpty()) {
+        builder.and(qProject.assignee.any().id.in(assigneeId));
+      }
+      if (createdDate != null && !createdDate.equals(LocalDate.MIN)) {
+        builder.and(qProject.createdDate.eq(createdDate.atStartOfDay()));
+      }
+      if (updatedDate != null && !updatedDate.equals(LocalDate.MIN)) {
+        builder.and(qProject.updatedDate.eq(updatedDate.atStartOfDay()));
+      }
+      if (dueDate != null && !dueDate.equals(LocalDate.MIN)) {
+        builder.and(qProject.dueDate.eq(dueDate.atStartOfDay()));
+      }
+      if (startDate != null && !startDate.equals(LocalDate.MIN)) {
+        builder.and(qProject.startDate.eq(startDate.atStartOfDay()));
+      }
+      if (endDate != null && !endDate.equals(LocalDate.MIN)) {
+        builder.and(qProject.endDate.eq(endDate.atStartOfDay()));
+      }
+      if (tag != null && !tag.isEmpty()) {
+        builder.and(qProject.tag.contains((Expression<String>) tag));
+      }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-          });
+      return builder.hasValue()
+          ? queryFactory.selectFrom(qProject).where(builder).fetch()
+          : getProjects();
+
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
@@ -127,6 +132,126 @@ public class ProjectService {
   }
 
   @Transactional
+  public void updateProjectsById(Long id, Map<String, Object> req, UserDetails userDetails)
+      throws BaseException {
+    try {
+      Project originProject = getProjectsById(id);
+      if (originProject == null) {
+        throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다.");
+      }
+
+      String key = req.keySet().iterator().next();
+      Object value = req.values().iterator().next();
+      Member modifier = memberService.getUsersByEmail(userDetails.getUsername());
+
+      JPAUpdateClause updateProject =
+          queryFactory
+              .update(qProject)
+              .set(qProject.updatedDate, LocalDateTime.now())
+              .where(qProject.id.eq(id));
+
+      switch (key) {
+        case "status":
+          IssueStatus newStatus = IssueStatus.valueOf(value.toString());
+          updateProject.set(qProject.status, newStatus).execute();
+          historyService.setHistory(
+              id,
+              Objects.toString(originProject.getStatus(), null),
+              newStatus.toString(),
+              key,
+              modifier);
+          break;
+        case "priority":
+          Priority newPriority = Priority.valueOf(value.toString());
+          updateProject.set(qProject.priority, newPriority).execute();
+          historyService.setHistory(
+              id,
+              Objects.toString(originProject.getPriority(), null),
+              newPriority.toString(),
+              key,
+              modifier);
+          break;
+        case "title":
+          updateProject.set(qProject.title, value.toString()).execute();
+          historyService.setHistory(id, originProject.getTitle(), value.toString(), key, modifier);
+          break;
+        case "subTitle":
+          String newSubTitle = Objects.toString(value, null);
+          updateProject.set(qProject.subTitle, newSubTitle).execute();
+          historyService.setHistory(id, originProject.getSubTitle(), newSubTitle, key, modifier);
+          break;
+        case "assigneeId":
+          Set<Member> newAssignee =
+              value != null
+                  ? memberService.getUsersByIds(new HashSet<>((List<Integer>) value))
+                  : null;
+          queryFactory
+              .delete(qProjectAssignee)
+              .where((qProjectAssignee.project.id.eq(id)))
+              .execute();
+          for (Member assignee : newAssignee) {
+            queryFactory
+                .insert(qProjectAssignee)
+                .columns(qProjectAssignee.project.id, qProjectAssignee.member.id)
+                .values(id, assignee.getId())
+                .execute();
+          }
+          historyService.setHistory(
+              id,
+              Objects.toString(
+                  originProject.getAssignee().stream().map(Member::getId).toList(), null),
+              Objects.toString(newAssignee, null),
+              key,
+              modifier);
+          break;
+        case "dueDate":
+        case "startDate":
+        case "endDate":
+          String originDate =
+              key.equals("dueDate")
+                  ? Objects.toString(originProject.getDueDate(), null)
+                  : key.equals("startDate")
+                      ? Objects.toString(originProject.getStartDate(), null)
+                      : Objects.toString(originProject.getEndDate(), null);
+          LocalDateTime newDate =
+              value != null
+                  ? LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                      .atStartOfDay()
+                  : null;
+          DateTimePath<LocalDateTime> updateTarget =
+              key.equals("dueDate")
+                  ? qProject.dueDate
+                  : key.equals("startDate") ? qProject.startDate : qProject.endDate;
+          updateProject.set(updateTarget, newDate).execute();
+          historyService.setHistory(
+              id, originDate, newDate != null ? newDate.toString() : null, key, modifier);
+          break;
+        case "description":
+          String newDescription = Objects.toString(value, null);
+          updateProject.set(qProject.description, newDescription);
+          historyService.setHistory(
+              id, originProject.getDescription(), newDescription, key, modifier);
+          break;
+        case "tag":
+          Set<String> newTag = value != null ? new HashSet<>((List<String>) value) : null;
+          updateProject.set(qProject.tag, newTag).execute();
+          historyService.setHistory(
+              id,
+              Objects.toString(originProject.getTag(), null),
+              Objects.toString(newTag, null),
+              key,
+              modifier);
+          break;
+        default:
+          throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
+      }
+
+    } catch (Exception e) {
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  @Transactional
   public void putProjectsById(Long id, Map<String, Object> req, UserDetails userDetails)
       throws BaseException {
     Project originProject = getProjectsById(id);
@@ -145,7 +270,7 @@ public class ProjectService {
 
       /* MEMO: 이전 데이터와의 변경 여부는 Front 에서 처리 후 넘어오기 때문에 값 변경 validation 처리 생략하고 업데이트 */
       projectRepository.save(saveProject);
-      historyService.setHistory(history.build());
+      //      historyService.setHistory(history.build());
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());

@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,66 +51,57 @@ public class ProjectController {
           String title,
       @RequestParam(value = "subTitle", required = false) @Parameter(description = "프로젝트 부제목")
           String subTitle,
-      @RequestParam(value = "creator", required = false) @Parameter(description = "생성자")
-          String creator,
-      @RequestParam(value = "assignee", required = false) @Parameter(description = "담당자")
-          String assignee,
+      @RequestParam(value = "creatorId", required = false) @Parameter(description = "생성자 ID")
+          Long creatorId,
+      @RequestParam(value = "assigneeId", required = false) @Parameter(description = "담당자 ID")
+          List<Long> assigneeId,
       @RequestParam(value = "createdDate", required = false)
           @Parameter(description = "생성일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime createdDate,
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate createdDate,
       @RequestParam(value = "updatedDate", required = false)
           @Parameter(description = "수정일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime updatedDate,
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate updatedDate,
       @RequestParam(value = "dueDate", required = false)
           @Parameter(description = "기한일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime dueDate,
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate dueDate,
       @RequestParam(value = "startDate", required = false)
           @Parameter(description = "시작일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime startDate,
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDate,
       @RequestParam(value = "endDate", required = false)
           @Parameter(description = "종료일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime endDate,
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDate,
       @RequestParam(value = "tag", required = false) @Parameter(description = "태그") Set<String> tag)
       throws BaseException {
-    if ((status != null && !status.trim().isEmpty())
-        || (priority != null) && !priority.trim().isEmpty()
-        || (title != null && !title.trim().isEmpty())
-        || (subTitle != null && !subTitle.trim().isEmpty())
-        || (creator != null && !creator.trim().isEmpty())
-        || (assignee != null && !assignee.trim().isEmpty())
-        || (createdDate != null && !createdDate.equals(LocalDateTime.MIN))
-        || (updatedDate != null && !updatedDate.equals(LocalDateTime.MIN))
-        || (dueDate != null && !dueDate.equals(LocalDateTime.MIN))
-        || (startDate != null && !startDate.equals(LocalDateTime.MIN))
-        || (endDate != null && !endDate.equals(LocalDateTime.MIN))
-        || (tag != null && !tag.isEmpty())) {
-      return projectService
-          .getProjectsByKeywords(
-              status,
-              priority,
-              title,
-              subTitle,
-              creator,
-              assignee,
-              createdDate,
-              updatedDate,
-              dueDate,
-              startDate,
-              endDate,
-              tag)
-          .stream()
-          .map(projectMapper::toResponse)
-          .collect(java.util.stream.Collectors.toList());
-    } else {
-      return projectService.getProjects().stream()
-          .map(projectMapper::toResponse)
-          .collect(java.util.stream.Collectors.toList());
-    }
+    /**
+     * TODO
+     *
+     * <p>- 날짜 관련 검색 조건들 (createdDate, updatedDate, dueDate, startDate, endDate) 단일 날짜 검색이 아닌 범위
+     * 검색으로 변경
+     *
+     * <p>- 페이징 처리 추가
+     */
+    return projectService
+        .getProjectsByKeywords(
+            status,
+            priority,
+            title,
+            subTitle,
+            creatorId,
+            assigneeId,
+            createdDate,
+            updatedDate,
+            dueDate,
+            startDate,
+            endDate,
+            tag)
+        .stream()
+        .map(projectMapper::toResponse)
+        .collect(java.util.stream.Collectors.toList());
   }
 
   @Operation(description = "프로젝트를 조회한다.")
@@ -133,6 +124,8 @@ public class ProjectController {
   /**
    * TODO
    *
+   * <p>- 하위 이슈 처리 추가
+   *
    * <p>- 수정 권한 처리 추가
    */
   @Operation(
@@ -153,7 +146,7 @@ public class ProjectController {
           - endDate (종료일) - String (format: yyyy-MM-dd)
           - description (내용) - String
           - tag (태그) - List<String>
-          - subIssuesId (하위 이슈 ID) - List<Integer>
+          - (TODO) subIssuesId (하위 이슈 ID) - List<Integer>
           """,
       requestBody =
           @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -171,7 +164,8 @@ public class ProjectController {
       @RequestBody Map<String, Object> req,
       @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
-    projectService.putProjectsById(id, req, userDetails);
+    projectService.updateProjectsById(id, req, userDetails);
+    //    projectService.putProjectsById(id, req, userDetails);
   }
 
   /**
