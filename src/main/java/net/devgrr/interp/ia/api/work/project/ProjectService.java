@@ -181,26 +181,33 @@ public class ProjectService {
           historyService.setHistory(id, originProject.getSubTitle(), newSubTitle, key, modifier);
           break;
         case "assigneeId":
+          String originAssignee =
+              !originProject.getAssignee().isEmpty()
+                  ? originProject.getAssignee().stream().map(Member::getId).toList().toString()
+                  : null;
           Set<Member> newAssignee =
               value != null
                   ? memberService.getUsersByIds(new HashSet<>((List<Integer>) value))
                   : null;
-          queryFactory
-              .delete(qProjectAssignee)
-              .where((qProjectAssignee.project.id.eq(id)))
-              .execute();
-          for (Member assignee : newAssignee) {
-            queryFactory
-                .insert(qProjectAssignee)
-                .columns(qProjectAssignee.project.id, qProjectAssignee.member.id)
-                .values(id, assignee.getId())
-                .execute();
-          }
+          //          querydsl 에러로 인해 임시 주석 처리
+          //          queryFactory
+          //              .delete(qProjectAssignee)
+          //              .where((qProjectAssignee.project.id.eq(id)))
+          //              .execute();
+          //          for (Member assignee : newAssignee) {
+          //            queryFactory
+          //                .insert(qProjectAssignee)
+          //                .columns(qProjectAssignee.project.id, qProjectAssignee.member.id)
+          //                .values(id, assignee.getId())
+          //                .execute();
+          //          }
+          projectRepository.save(projectMapper.putProjectAssignee(originProject, 0, newAssignee));
           historyService.setHistory(
               id,
-              Objects.toString(
-                  originProject.getAssignee().stream().map(Member::getId).toList(), null),
-              Objects.toString(newAssignee, null),
+              originAssignee,
+              newAssignee != null
+                  ? newAssignee.stream().map(Member::getId).toList().toString()
+                  : null,
               key,
               modifier);
           break;
