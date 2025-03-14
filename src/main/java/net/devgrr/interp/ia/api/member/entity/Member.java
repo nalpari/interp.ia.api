@@ -73,13 +73,13 @@ public class Member extends BaseEntity {
   private Boolean isActive;
 
   public Member() {
-      super();
+    super();
   }
 
   public static List<String> getFields() {
     Field[] fields = Member.class.getDeclaredFields();
     List<String> list = new ArrayList<>();
-    for(Field f : fields) {
+    for (Field f : fields) {
       list.add(f.getName());
     }
     return list;

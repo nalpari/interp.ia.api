@@ -3,18 +3,26 @@ package net.devgrr.interp.ia.api.member;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
+import net.devgrr.interp.ia.api.config.swagger.annotation.SwaggerBody;
 import net.devgrr.interp.ia.api.member.dto.*;
+import net.devgrr.interp.ia.api.member.dto.file.MemberFileOptionRequest;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +33,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Validated
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -84,8 +93,7 @@ public class MemberController {
     memberService.putUsersActiveByEmail(email);
   }
 
-  @Operation(description = "파일을 입력받아 데이터를 저장한다." + "<br>확장자가 .csv, .xlsx, .xls 인 것만 가능"
-  +"<br> ")
+  @Operation(description = "파일을 입력받아 데이터를 저장한다." + "<br>확장자가 .csv, .xlsx, .xls 인 것만 가능" + "<br> ")
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public void uploadMemberFile(@RequestPart("file") MultipartFile file)
       throws IOException, JobExecutionException, BaseException {
@@ -104,5 +112,33 @@ public class MemberController {
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName())
         .contentType(MediaType.APPLICATION_OCTET_STREAM)
         .body(resource);
+  @Operation(
+      description =
+          "모든 회원 정보를 파일로 내려받는다."
+              + "<br>csv 파일과 엑셀 파일 중 선택"
+              + "<br>엑셀 파일로 다운로드 시 포맷터 적용은 다운로드 받을 엑셀 파일 필요, ")
+  @SwaggerBody(
+      content =
+          @Content(
+              encoding = @Encoding(name = "dto", contentType = MediaType.APPLICATION_JSON_VALUE)))
+  @PostMapping(value = "/download", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<Resource> downloadMemberFile(
+      @Parameter(description = "파일 업로드") @RequestPart(value = "file", required = false)
+          MultipartFile file,
+      @Parameter(description = "다운로드 옵션") @RequestPart(value = "dto")
+          MemberFileOptionRequest memberFileOptionRequest)
+      throws JobExecutionException, BaseException, IOException {
+    File saveFile = memberFileService.downloadMemberFile(file, memberFileOptionRequest);
+    Resource resource = new FileSystemResource(saveFile);
+    String fileNameEncoded = URLEncoder.encode(saveFile.getName(), StandardCharsets.UTF_8);
+    try {
+      return ResponseEntity.ok()
+          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileNameEncoded)
+          .contentType(MediaType.APPLICATION_OCTET_STREAM)
+          .body(resource);
+    } finally {
+      resource.getInputStream().close();
+      memberFileService.deleteFile(saveFile);
+    }
   }
 }

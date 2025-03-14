@@ -2,13 +2,12 @@ package net.devgrr.interp.ia.api.config.batch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
-import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.dto.MemberForFileRequest;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
@@ -26,7 +25,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class BatchConfig {
   private final JobRepository jobRepository;
   private final PlatformTransactionManager transactionManager;
-  private final MemberRepository memberRepository;
 
   //  파일 DB에 import
   //  파일을 읽고 DB 에 write 하는 하나의 step 으로 구성
@@ -38,7 +36,10 @@ public class BatchConfig {
   //  DB 파일로 export
   @Bean
   public Job exportMemberJob(Step exportMemberStep) {
-    return new JobBuilder("exportMemberJob", jobRepository).start(exportMemberStep).build();
+    return new JobBuilder("exportMemberJob", jobRepository)
+        .incrementer(new RunIdIncrementer())
+        .start(exportMemberStep)
+        .build();
   }
 
   /**
@@ -68,10 +69,13 @@ public class BatchConfig {
    */
   @Bean
   public Step exportMemberStep(
-      ItemStreamWriter<Member> writer, JpaCursorItemReader<Member> reader) {
+      ItemStreamWriter<Object[]> writer,
+      ItemProcessor<Member, Object[]> jpqlProcessor,
+      JpaCursorItemReader<Member> reader) {
     return new StepBuilder("exportMemberStep", jobRepository)
-        .<Member, Member>chunk(10, transactionManager)
+        .<Member, Object[]>chunk(10, transactionManager)
         .reader(reader)
+        .processor(jpqlProcessor)
         .writer(writer)
         .build();
   }

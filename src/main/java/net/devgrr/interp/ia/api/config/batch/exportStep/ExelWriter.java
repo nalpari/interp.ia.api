@@ -1,5 +1,6 @@
 package net.devgrr.interp.ia.api.config.batch.exportStep;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -29,7 +30,7 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
   private Workbook workbook;
   private Sheet sheet;
 
-  private String[] fieldsName;
+  @Setter private String[] fieldsName;
 
 //  reflection
   private Class<T> type;
@@ -37,8 +38,8 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
     this.type = type;
   }
 
-//  .xlsx, .xls 에 따라 workbook 지정
-//  실제 파일 작성 전(write)에 호출됨
+  //  .xlsx, .xls 에 따라 workbook 지정
+  //  실제 파일 작성 전(write)에 호출됨
   @Override
   public void open(ExecutionContext executionContext) throws ItemStreamException {
     if (isXlsx) {
@@ -53,38 +54,33 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
   @Override
   public void write(Chunk<? extends T> chunk) throws Exception {
     if (chunk.isEmpty()) return;
-//    읽어온 엔티티의 필드들을 가져와서 헤더로 지정
+//    columns 옵션이 없으면 지정한 클래스로부터 필드들 읽어옴
     if (fieldsName == null) {
       fieldsName = getFieldNames();
       createHeaderRow();
     }
-//    읽어온 Member 의 chunk 들을 한 줄씩 row 로 작성
+    //    읽어온 Member 의 chunk 들을 한 줄씩 row 로 작성
     for (T item : chunk) {
-      createDataRow(item);
+      createDataRow((Object[]) item);
     }
   }
 
-  private void createDataRow(T item) throws IllegalAccessException {
-//    실제 데이터가 존재하는 행의 개수 반환 후 행 지정 ->
-//    1열에 header(entity fields) 가 붙어있기 때문에 fields 의 개수만큼 행이 생성됨
+  private void createDataRow(Object[] item) throws IllegalAccessException {
+    //    실제 데이터가 존재하는 행의 개수 반환 후 행 지정 ->
+    //    1열에 header(entity fields) 가 붙어있기 때문에 fields 의 개수만큼 행이 생성됨
     int rowNum = this.sheet.getPhysicalNumberOfRows();
     Row row = this.sheet.createRow(rowNum);
 
     for (int i = 0; i < fieldsName.length; i++) {
-      String fieldName = fieldsName[i];
-      Field field;
-      try {
-//        지정한 entity class reflection -> 정의된 fields 가져오기 위함
-        field = item.getClass().getDeclaredField(fieldName);
-      } catch (NoSuchFieldException e) {
-        continue;
+      Object value = item[i];
+
+      int colIndex;
+      if (dataFormat != null) {
+        colIndex = col + i;
+      } else {
+        colIndex = i;
       }
-//      Member private 객체 접근 허용하여 item(Member) 객체에서 필드의 가져옴
-      field.setAccessible(true);
-      Object value = field.get(item);
-//      타입에 맞게 엑셀 파일 작성
-//      ex: email, password 는 string 이므로 string 으로 엑셀파일에 작성하게 됨
-      Cell cell = row.createCell(i);
+      Cell cell = row.createCell(colIndex);
       if (value != null) {
         if (value instanceof String) {
           cell.setCellValue((String) value);
@@ -97,7 +93,7 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
         } else {
           cell.setCellValue(value.toString());
         }
-//        value 가 null 일 경우에는 빈 값으로 작성
+        //        value 가 null 일 경우에는 빈 값으로 작성
       } else {
         cell.setCellValue("");
       }
@@ -113,7 +109,7 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
     }
   }
   private String[] getFieldNames() {
-    Field[] fields = type.getDeclaredFields();
+    Field[] fields = clazz.getDeclaredFields();
     String[] fieldNames = new String[fields.length];
     for (int i = 0; i < fields.length; i++) {
       fieldNames[i] = fields[i].getName();
@@ -121,7 +117,7 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
     return fieldNames;
   }
 
-//  엑셀 파일 service 에서 받은 경로로 내보냄
+  //  엑셀 파일 service 에서 받은 경로로 내보냄
   @Override
   public void close() throws ItemStreamException {
     try {
