@@ -100,18 +100,6 @@ public class MemberController {
     memberFileService.uploadMemberFile(file);
   }
 
-  @Operation(description = "모든 회원 정보를 파일로 내려받는다." + "<br>csv 파일과 엑셀 파일 중 선택")
-  @GetMapping("/download")
-  public ResponseEntity<FileSystemResource> downloadMemberFile(
-      @RequestParam("fileType") @Parameter(description = "csv = .csv 파일 | xlsx = .xlsx 파일 | xls = .xls 파일")
-          String fileType)
-      throws JobExecutionException, BaseException {
-    File file = memberFileService.downloadMemberFile(fileType);
-    FileSystemResource resource = new FileSystemResource(file);
-    return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName())
-        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-        .body(resource);
   @Operation(
       description =
           "모든 회원 정보를 파일로 내려받는다."

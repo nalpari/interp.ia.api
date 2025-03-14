@@ -26,22 +26,29 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
 
   @Setter private Resource resource;
   @Setter private boolean isXlsx;
+  @Setter private String dataFormat;
+  @Setter private boolean header;
 
   private Workbook workbook;
   private Sheet sheet;
 
   @Setter private String[] fieldsName;
 
-//  reflection
-  private Class<T> type;
-  public ExelWriter(Class<T> type) {
-    this.type = type;
-  }
+  private int row;
+  private int col;
+
+  @Setter private Class<?> clazz;
 
   //  .xlsx, .xls 에 따라 workbook 지정
   //  실제 파일 작성 전(write)에 호출됨
   @Override
   public void open(ExecutionContext executionContext) throws ItemStreamException {
+    if (dataFormat != null) {
+      setRowColByDataFormat();
+//      포맷 옵션이 있으면 클라이언트로부터 받은 파일을 열고 작성
+      doOpenResource();
+      return;
+    }
     if (isXlsx) {
       this.workbook = new XSSFWorkbook();
     } else {
@@ -49,14 +56,37 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
     }
     this.sheet = this.workbook.createSheet("Sheet1");
   }
-//  엑셀 파일 작성 메소드
-//  chunk 단위로 파일을 읽음
+
+  private void setRowColByDataFormat() {
+    this.col = Character.toLowerCase(dataFormat.charAt(0)) - 'a';
+    this.row = Integer.parseInt(dataFormat.substring(1)) - 1;
+  }
+
+  private void doOpenResource() {
+    try {
+      FileInputStream fileInputStream = new FileInputStream(resource.getFile());
+      if (isXlsx) {
+        this.workbook = new XSSFWorkbook(fileInputStream);
+      } else {
+        this.workbook = new HSSFWorkbook(fileInputStream);
+      }
+      this.sheet = this.workbook.getSheetAt(0);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  //  엑셀 파일 작성 메소드
+  //  chunk 단위로 파일을 읽음
   @Override
   public void write(Chunk<? extends T> chunk) throws Exception {
     if (chunk.isEmpty()) return;
 //    columns 옵션이 없으면 지정한 클래스로부터 필드들 읽어옴
     if (fieldsName == null) {
       fieldsName = getFieldNames();
+    }
+    //    header 옵션에 따라 읽어온 엔티티의 필드들을 가져와서 헤더로 지정
+    if (header) {
       createHeaderRow();
     }
     //    읽어온 Member 의 chunk 들을 한 줄씩 row 로 작성
@@ -69,8 +99,10 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
     //    실제 데이터가 존재하는 행의 개수 반환 후 행 지정 ->
     //    1열에 header(entity fields) 가 붙어있기 때문에 fields 의 개수만큼 행이 생성됨
     int rowNum = this.sheet.getPhysicalNumberOfRows();
+    if (dataFormat != null) {
+      rowNum = this.row;
+    }
     Row row = this.sheet.createRow(rowNum);
-
     for (int i = 0; i < fieldsName.length; i++) {
       Object value = item[i];
 
@@ -98,16 +130,33 @@ public class ExelWriter<T> implements ItemStreamWriter<T> {
         cell.setCellValue("");
       }
     }
-  }
-
-//  Member 의 fields 가져와서 header 에 작성함
-  private void createHeaderRow() {
-    Row headerRow = this.sheet.createRow(0);
-    for (int i = 0; i < fieldsName.length; i++) {
-      Cell cell = headerRow.createCell(i);
-      cell.setCellValue(fieldsName[i]);
+    if (dataFormat != null) {
+      this.row++;
     }
   }
+
+  //  Member 의 fields 가져와서 header 에 작성함
+  private void createHeaderRow() {
+    int row;
+    if (dataFormat != null) {
+      row = this.row;
+    } else {
+      row = 0;
+    }
+    Row headerRow = this.sheet.createRow(row);
+    for (int i = 0; i < fieldsName.length; i++) {
+      int colIndex = i;
+      if (dataFormat != null) {
+        colIndex = col + i;
+      }
+      Cell cell = headerRow.createCell(colIndex);
+      cell.setCellValue(fieldsName[i]);
+    }
+    if (dataFormat != null) {
+      this.row++;
+    }
+  }
+
   private String[] getFieldNames() {
     Field[] fields = clazz.getDeclaredFields();
     String[] fieldNames = new String[fields.length];

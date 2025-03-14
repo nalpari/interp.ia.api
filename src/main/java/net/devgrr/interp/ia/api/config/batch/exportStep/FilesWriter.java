@@ -18,18 +18,14 @@ public class FilesWriter {
 
   @Bean
   @StepScope
-  public ItemStreamWriter<Member> fileWriter(@Value("#{jobParameters['filePath']}") String filePath) {
-//    받은 파일 경로로 확장자 구분하여 writer 지정
-    if(filePath.endsWith(".csv")) {
-      return csvWriter(filePath);
-    } else if(filePath.endsWith(".xlsx")) {
-      return exelWriter(filePath, true);
-    } else if(filePath.endsWith(".xls")){
-      return exelWriter(filePath, false);
-    } else{
   public ItemStreamWriter<Object[]> fileWriter(
       @Value("#{jobParameters['filePath']}") String filePath,
+      @Value("#{jobParameters['dataFormat']}") String dataFormat,
+      @Value("#{jobParameters['header']}") String header,
       @Value("#{jobParameters['columns']}") String columns,
+      @Value("#{jobParameters['classType']}") String classType) {
+    setClazz(classType);
+
     //    받은 파일 경로로 확장자 구분하여 writer 지정
     if (filePath.endsWith(".csv")) {
       return csvWriter(filePath, header, columns);
@@ -57,12 +53,16 @@ public class FilesWriter {
 
     writer.setResource(new FileSystemResource(filePath));
     writer.setXlsx(isXlsx);
+    writer.setHeader("true".equals(header));
 
 //    columns 옵션이 없다면 전체 데이터 조회
     if (columns.isBlank()) {
       writer.setClazz(clazz);
     } else {
       writer.setFieldsName(columns.split(","));
+    }
+    if (!dataFormat.isBlank()) {
+      writer.setDataFormat(dataFormat);
     }
     return writer;
   }
@@ -79,11 +79,19 @@ public class FilesWriter {
     lineAggregator.setFieldExtractor(fieldExtractor);
     writer.setLineAggregator(lineAggregator);
 
-//    header 지정
-    writer.setHeaderCallback(
-        w -> {
-          w.write(String.join(",", Member.getFields()));
-        });
+    //    header 지정
+    if ("true".equals(header)) {
+      if (columns.isBlank()) {
+        writer.setHeaderCallback(
+            w -> {
+              w.write(String.join(",", Arrays.toString(clazz.getDeclaredFields())));
+            });
+      }
+      writer.setHeaderCallback(
+          w -> {
+            w.write(columns);
+          });
+    }
     return writer;
   }
 }
