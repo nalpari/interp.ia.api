@@ -1,0 +1,38 @@
+@startuml
+Client -> API: Data export Request
+
+API -> JobLauncher: start exportMemberJob
+'JobLauncher 에 배치 작업 시작 지시
+
+JobLauncher --> Job: jobExecution()
+JobLauncher --> Job: createJobInstance()
+JobLauncher --> Job: getJobRepository()
+'작업 상태 관리 -> 배치 처음 실행시키면 생성되는 테이블들로 관리된다.
+'각 작업의 status, 생성된 instance 들의 정보를 가지고 있다.
+JobLauncher --> Job: executeJob()
+
+Job --> Step : start exportMemberStep
+Job --> Step : start transaction
+Job --> Step : ItemReader.read() - jpaCursorReader
+'JpaItemReader 통해 DB에 저장된 데이터 쿼리문으로 읽음
+Job --> Step : ItemProcessor.process() - jpqlProcessor
+'Member 타입으로 읽고 Object[] 로 형변환
+'원하는 컬럼만 export 하기 위함
+Job --> Step : ItemWriter.process() - FileWriter
+'데이터 엑셀, csv 파일 형식으로 작성
+Job --> Step : commit
+'step이 실행될 동안 반환된 에러가 없다면 데이터 커밋
+
+Step --> Job : stepComplete
+
+Job --> JobLauncher : JobComplete
+'importMemberJob 의 모든 step 이 완료되었음
+
+JobLauncher -> API : JobCompletion
+'작업이 완료된 이후 리스너로 처리가 가능하지만 service 단에서 관리하도록 구현
+
+API -> Client : File Resource Response
+'저장된 파일 클라이언트에게 리소스 형태로 반환
+
+
+@enduml

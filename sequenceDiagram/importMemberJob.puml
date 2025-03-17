@@ -2,10 +2,13 @@
 Client -> API: Data Import Request
 
 API -> JobLauncher: start importMemberJob
+'JobLauncher 에 배치 작업 시작 지시
 
 JobLauncher --> Job: jobExecution()
 JobLauncher --> Job: createJobInstance()
 JobLauncher --> Job: getJobRepository()
+'작업 상태 관리 -> 배치 처음 실행시키면 생성되는 테이블들로 관리된다.
+'각 작업의 status, 생성된 instance 들의 정보를 가지고 있다.
 JobLauncher --> Job: executeJob()
 
 Job --> Step : start importMemberStep
@@ -19,6 +22,15 @@ Job --> Step : ItemWriter.process() - jpaWriter
 Job --> Step : commit
 'step이 실행될 동안 반환된 에러가 없다면 데이터 커밋
 
+Step --> Job : stepComplete
+
+Job --> JobLauncher : JobComplete
+'importMemberJob 의 모든 step 이 완료되었음
+
+JobLauncher -> API : JobCompletion
+'작업이 완료된 이후 리스너로 처리가 가능하지만 service 단에서 관리하도록 구현
+
+API -> Client : Response 200
 
 
 @enduml
