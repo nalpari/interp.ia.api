@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.ArrayList;
 
 @Configuration
-public class JpaCursorReader {
+public class JpaReader {
   @Bean
   @StepScope
   public JpaCursorItemReader<Member> jpaCursorItemReader(

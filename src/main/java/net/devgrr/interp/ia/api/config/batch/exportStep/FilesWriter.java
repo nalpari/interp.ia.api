@@ -1,6 +1,8 @@
 package net.devgrr.interp.ia.api.config.batch.exportStep;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemStreamWriter;
@@ -38,7 +40,7 @@ public class FilesWriter {
     }
   }
 
-//  reflection 사용을 위한 clazz 지정
+  //  reflection 사용을 위한 clazz 지정
   private void setClazz(String classType) {
     switch (classType) {
       case "Member":
@@ -55,7 +57,7 @@ public class FilesWriter {
     writer.setXlsx(isXlsx);
     writer.setHeader("true".equals(header));
 
-//    columns 옵션이 없다면 전체 데이터 조회
+    //    columns 옵션이 없다면 전체 데이터 조회
     if (columns.isBlank()) {
       writer.setClazz(clazz);
     } else {
@@ -84,13 +86,22 @@ public class FilesWriter {
       if (columns.isBlank()) {
         writer.setHeaderCallback(
             w -> {
-              w.write(String.join(",", Arrays.toString(clazz.getDeclaredFields())));
+              String memberFields =
+                  Arrays.stream(clazz.getDeclaredFields())
+                      .map(Field::getName)
+                      .collect(Collectors.joining(","));
+              String baseFields =
+                  Arrays.stream(clazz.getSuperclass().getDeclaredFields())
+                      .map(Field::getName)
+                      .collect(Collectors.joining(","));
+              w.write(memberFields + "," + baseFields);
+            });
+      } else {
+        writer.setHeaderCallback(
+            w -> {
+              w.write(columns);
             });
       }
-      writer.setHeaderCallback(
-          w -> {
-            w.write(columns);
-          });
     }
     return writer;
   }
