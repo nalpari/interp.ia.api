@@ -124,8 +124,10 @@ public class MemberFileService {
     if (m.fileName() == null || m.fileName().isEmpty()) {
       LocalDate today = LocalDate.now();
       fileName = "Member_data_" + today.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + extension;
+    } else {
+      fileName = m.fileName() + extension;
     }
-    String filePath = FILE_DIRECTORY + fileName + extension;
+    String filePath = FILE_DIRECTORY + fileName;
 
     String cols = "";
     if (m.columns() != null && !m.columns().isEmpty()) {
@@ -148,11 +150,36 @@ public class MemberFileService {
     return new File(filePath);
   }
 
-  public boolean deleteFile(File file) {
-    boolean deleted = false;
+  public void deleteFile(File file) {
     if (file.exists()) {
-      deleted = file.delete();
+      boolean deleted = file.delete();
     }
-    return deleted;
+  }
+
+  public void getStreamingResponse(OutputStream outputStream, File saveFile) {
+    try (FileInputStream fileInputStream = new FileInputStream(saveFile)) {
+      InputStream inputStream = new BufferedInputStream(fileInputStream);
+      byte[] buffer = new byte[1024];
+      int bytesRead;
+      //  파일에서 데이터 읽고 outputStream 으로 전송
+      while ((bytesRead = inputStream.read(buffer)) != -1) {
+        outputStream.write(buffer, 0, bytesRead);
+        //  버퍼에 데이터 쌓이는 것 방지
+        outputStream.flush();
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      //  garbage collector 실행 -> 메모리 회수
+      //  엑셀 파일의 경우 responseEntity 반환된 이후에도 열려있기 때문에 가비지 컬렉터 실행시켜 메모리 회수함
+      System.gc();
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      } finally {
+        deleteFile(saveFile);
+      }
+    }
   }
 }

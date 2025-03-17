@@ -7,8 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -21,8 +20,6 @@ import net.devgrr.interp.ia.api.config.swagger.annotation.SwaggerBody;
 import net.devgrr.interp.ia.api.member.dto.*;
 import net.devgrr.interp.ia.api.member.dto.file.MemberFileOptionRequest;
 import org.springframework.batch.core.JobExecutionException;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Slf4j
 @Validated
@@ -110,23 +108,24 @@ public class MemberController {
           @Content(
               encoding = @Encoding(name = "dto", contentType = MediaType.APPLICATION_JSON_VALUE)))
   @PostMapping(value = "/download", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<Resource> downloadMemberFile(
+  public ResponseEntity<StreamingResponseBody> downloadMemberFile(
       @Parameter(description = "파일 업로드") @RequestPart(value = "file", required = false)
           MultipartFile file,
       @Parameter(description = "다운로드 옵션") @RequestPart(value = "dto")
           MemberFileOptionRequest memberFileOptionRequest)
       throws JobExecutionException, BaseException, IOException {
     File saveFile = memberFileService.downloadMemberFile(file, memberFileOptionRequest);
-    Resource resource = new FileSystemResource(saveFile);
+    //    Resource resource = new FileSystemResource(saveFile);
     String fileNameEncoded = URLEncoder.encode(saveFile.getName(), StandardCharsets.UTF_8);
-    try {
-      return ResponseEntity.ok()
-          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileNameEncoded)
-          .contentType(MediaType.APPLICATION_OCTET_STREAM)
-          .body(resource);
-    } finally {
-      resource.getInputStream().close();
-      memberFileService.deleteFile(saveFile);
-    }
+
+    //    데이터 변환을 위해 저장했던 파일을 response 응답한 후 바로 삭제하기 위해 StreamingBody 사용
+    //    파일을 Streaming 하면서 다운로드 완료 후 삭제함 Stream 을 명시적으로 닫지 않음
+    StreamingResponseBody body =
+        outputStream -> memberFileService.getStreamingResponse(outputStream, saveFile);
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileNameEncoded)
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .body(body);
   }
 }
