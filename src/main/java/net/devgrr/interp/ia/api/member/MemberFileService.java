@@ -34,7 +34,7 @@ public class MemberFileService {
     }
   }
 
-  public void uploadMemberFile(MultipartFile file)
+  public void uploadMemberFile(MultipartFile file, String dataSkip)
       throws IOException, JobExecutionException, BaseException {
     createDirectory();
 
@@ -47,6 +47,7 @@ public class MemberFileService {
     JobParameters jobParameter =
         new JobParametersBuilder()
             .addString("filePath", savedFile.getAbsolutePath())
+            .addString("dataSkip", dataSkip)
             .addLong("time", System.currentTimeMillis())
             .toJobParameters();
     //    batch job 실행

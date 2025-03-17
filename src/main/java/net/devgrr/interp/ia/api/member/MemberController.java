@@ -91,11 +91,24 @@ public class MemberController {
     memberService.putUsersActiveByEmail(email);
   }
 
-  @Operation(description = "파일을 입력받아 데이터를 저장한다." + "<br>확장자가 .csv, .xlsx, .xls 인 것만 가능" + "<br> ")
+  @Operation(
+      description =
+          "파일을 입력받아 데이터를 저장한다."
+              + "<br>확장자가 .csv, .xlsx, .xls 인 것만 가능"
+              + "<br>"
+              + "db에 이미 같은 이메일이 존재 할 때 건너뛰고 저장할 지, 업데이트 할 지 지정 (skip = 건너뛰고 저장 | update = 업데이트)")
+  @SwaggerBody(
+          content = @Content(
+                  encoding = @Encoding(name = "dataSkip", contentType = MediaType.APPLICATION_JSON_VALUE)
+          )
+  )
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public void uploadMemberFile(@RequestPart("file") MultipartFile file)
+  public void uploadMemberFile(
+      @RequestPart("file") MultipartFile file,
+      @RequestParam(value = "dataSkip") @Parameter(description = "skip = 건너뛰고 저장 / update = 업데이트 ")
+          String dataSkip)
       throws IOException, JobExecutionException, BaseException {
-    memberFileService.uploadMemberFile(file);
+    memberFileService.uploadMemberFile(file, dataSkip);
   }
 
   @Operation(

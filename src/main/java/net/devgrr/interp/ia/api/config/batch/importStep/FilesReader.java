@@ -2,7 +2,7 @@ package net.devgrr.interp.ia.api.config.batch.importStep;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devgrr.interp.ia.api.member.dto.MemberForFileRequest;
+import net.devgrr.interp.ia.api.member.dto.file.MemberForFileRequest;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.file.FlatFileItemReader;

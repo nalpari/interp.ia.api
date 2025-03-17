@@ -1,9 +1,10 @@
-package net.devgrr.interp.ia.api.member.dto;
+package net.devgrr.interp.ia.api.member.dto.file;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import net.devgrr.interp.ia.api.member.dto.MemberValidationGroup;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

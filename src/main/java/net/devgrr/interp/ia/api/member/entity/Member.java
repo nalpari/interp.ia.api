@@ -9,9 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import net.devgrr.interp.ia.api.member.MemberRole;
@@ -74,14 +71,5 @@ public class Member extends BaseEntity {
 
   public Member() {
     super();
-  }
-
-  public static List<String> getFields() {
-    Field[] fields = Member.class.getDeclaredFields();
-    List<String> list = new ArrayList<>();
-    for (Field f : fields) {
-      list.add(f.getName());
-    }
-    return list;
   }
 }

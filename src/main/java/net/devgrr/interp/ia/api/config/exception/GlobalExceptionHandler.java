@@ -2,6 +2,8 @@ package net.devgrr.interp.ia.api.config.exception;
 
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.attoparser.ParseException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.jdbc.BatchFailedException;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.http.ResponseEntity;
@@ -69,6 +71,18 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(JobExecutionException.class)
   protected ResponseEntity<ErrorResponse> handle(JobExecutionException e) {
+    return ResponseEntity.internalServerError()
+        .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
+  }
+
+  @ExceptionHandler(ParseException.class)
+  protected ResponseEntity<ErrorResponse> handle(ParseException e) {
+    return ResponseEntity.internalServerError()
+        .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  protected ResponseEntity<ErrorResponse> handle(ConstraintViolationException e) {
     return ResponseEntity.internalServerError()
         .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
   }
