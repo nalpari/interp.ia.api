@@ -1,8 +1,12 @@
 @startuml
 Client -> API: Data export Request
 
-API -> JobLauncher: start exportMemberJob
+API -> API : do business logic
+'업로드 한 파일 서버에 저장하는 로직 수행
+'업로드 한 파일 이름에 따라 파일 경로를 job Parameter 에 지정
+API --> JobLauncher: start exportMemberJob
 'JobLauncher 에 배치 작업 시작 지시
+
 
 JobLauncher --> Job: jobExecution()
 JobLauncher --> Job: createJobInstance()
@@ -28,7 +32,7 @@ Step --> Job : stepComplete
 Job --> JobLauncher : JobComplete
 'importMemberJob 의 모든 step 이 완료되었음
 
-JobLauncher -> API : JobCompletion
+JobLauncher --> API : JobCompletion
 '작업이 완료된 이후 리스너로 처리가 가능하지만 service 단에서 관리하도록 구현
 
 API -> Client : File Resource Response

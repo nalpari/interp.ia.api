@@ -1,6 +1,8 @@
 @startuml
 Client -> API: Data Import Request
 
+API -> API : Do business Logic
+'파일 경로, 파일 저장 타입 등 job parameter 지정
 API -> JobLauncher: start importMemberJob
 'JobLauncher 에 배치 작업 시작 지시
 
@@ -27,7 +29,7 @@ Step --> Job : stepComplete
 Job --> JobLauncher : JobComplete
 'importMemberJob 의 모든 step 이 완료되었음
 
-JobLauncher -> API : JobCompletion
+JobLauncher --> API : JobCompletion
 '작업이 완료된 이후 리스너로 처리가 가능하지만 service 단에서 관리하도록 구현
 
 API -> Client : Response 200
