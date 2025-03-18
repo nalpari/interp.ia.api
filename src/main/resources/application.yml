@@ -23,11 +23,6 @@ spring:
       data-locations: classpath:/data.sql
   profiles:
     include: jwt
-  batch:
-    jdbc:
-      initialize-schema: always
-    job:
-      enabled: true
 
 jasypt:
   encryptor:
