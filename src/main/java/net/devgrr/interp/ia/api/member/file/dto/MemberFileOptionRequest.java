@@ -1,4 +1,4 @@
-package net.devgrr.interp.ia.api.member.dto.file;
+package net.devgrr.interp.ia.api.member.file.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

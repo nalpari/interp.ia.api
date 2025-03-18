@@ -18,8 +18,8 @@ import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.config.swagger.annotation.SwaggerBody;
 import net.devgrr.interp.ia.api.member.dto.*;
-import net.devgrr.interp.ia.api.member.dto.file.MemberFileOptionRequest;
-import org.springframework.batch.core.JobExecutionException;
+import net.devgrr.interp.ia.api.member.file.FileService;
+import net.devgrr.interp.ia.api.member.file.dto.MemberFileOptionRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,7 +39,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RestController
 public class MemberController {
 
-  private final MemberFileService memberFileService;
+  private final FileService memberFileService;
   private final MemberService memberService;
   private final MemberMapper memberMapper;
 
@@ -104,11 +104,8 @@ public class MemberController {
   )
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public void uploadMemberFile(
-      @RequestPart("file") MultipartFile file,
-      @RequestParam(value = "dataSkip") @Parameter(description = "skip = 건너뛰고 저장 / update = 업데이트 ")
-          String dataSkip)
-      throws IOException, JobExecutionException, BaseException {
-    memberFileService.uploadMemberFile(file, dataSkip);
+      @RequestPart("file") MultipartFile file) throws Exception {
+    memberFileService.uploadMemberFile(file);
   }
 
   @Operation(
@@ -126,9 +123,8 @@ public class MemberController {
           MultipartFile file,
       @Parameter(description = "다운로드 옵션") @RequestPart(value = "dto")
           MemberFileOptionRequest memberFileOptionRequest)
-      throws JobExecutionException, BaseException, IOException {
+      throws BaseException, IOException {
     File saveFile = memberFileService.downloadMemberFile(file, memberFileOptionRequest);
-    //    Resource resource = new FileSystemResource(saveFile);
     String fileNameEncoded = URLEncoder.encode(saveFile.getName(), StandardCharsets.UTF_8);
 
     //    데이터 변환을 위해 저장했던 파일을 response 응답한 후 바로 삭제하기 위해 StreamingBody 사용

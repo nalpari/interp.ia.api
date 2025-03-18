@@ -2,7 +2,6 @@ package net.devgrr.interp.ia.api.config.mapStruct;
 
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.member.MemberRole;
-import net.devgrr.interp.ia.api.member.dto.file.MemberForFileRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberRequest;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
 import net.devgrr.interp.ia.api.member.dto.MemberUpdateRequest;
@@ -38,11 +37,6 @@ public interface MemberMapper {
   @Mapping(target = "isActive", expression = "java(true)")
   Member toMember(MemberRequest memberRequest);
 
-  @Mapping(source = "password", target = "password", qualifiedByName = "pwEncoder")
-  @Mapping(source = "role", target = "role", qualifiedByName = "toMemberRole")
-  @Mapping(target = "isActive", expression = "java(true)")
-  Member toMember(MemberForFileRequest memberForFileRequest);
-
   MemberResponse toResponse(Member member);
 
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
@@ -58,16 +52,6 @@ public interface MemberMapper {
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   void updateMember(MemberUpdateRequest req, @MappingTarget Member member) throws BaseException;
-
-  @Mapping(
-          source = "password",
-          target = "password",
-          qualifiedByName = "pwEncoder",
-          conditionExpression = "java(req.getPassword() != null && !req.getPassword().isEmpty())")
-  @Mapping(source = "role", target = "role", qualifiedByName = "toMemberRole")
-  @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
-  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-  void updateMember(MemberForFileRequest req, @MappingTarget Member member) throws BaseException;
 
 
   @Mapping(target = "isActive", expression = "java(false)")

@@ -27,4 +27,5 @@ public record MemberRequest(
     String position,
     @Schema(description = "전화번호") String phone,
     @Schema(description = "회원 이미지") String image,
-    @Schema(description = "권한") String role) {}
+    @Schema(description = "권한") String role) {
+}
