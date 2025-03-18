@@ -20,13 +20,6 @@ public class HistoryService {
   }
 
   @Transactional
-  //  public void setHistory(History history) throws BaseException {
-  //    try {
-  //      historyRepository.save(history);
-  //    } catch (Exception e) {
-  //      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
-  //    }
-  //  }
   public void setHistory(
       Long issueId, String beforeValue, String afterValue, String fieldName, Member modifier)
       throws BaseException {

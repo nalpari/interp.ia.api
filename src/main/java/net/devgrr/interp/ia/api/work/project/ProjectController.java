@@ -10,8 +10,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
+import net.devgrr.interp.ia.api.config.issue.IssueStatus;
+import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
@@ -40,13 +43,19 @@ public class ProjectController {
   private final ProjectService projectService;
   private final ProjectMapper projectMapper;
 
-  @Operation(description = "프로젝트 목록을 조회한다. <br>검색 조건이 있다면 해당 조건이 적용된 프로젝트를 조회한다.")
+  @Operation(
+      description =
+          """
+          프로젝트 목록을 조회한다. \n
+          검색 조건은 전부 선택 사항이며, 조건이 여러 개 있을 경우 AND 조건으로 검색한다. <br>
+          검색 조건이 없을 경우 전체 목록을 조회한다.
+          """)
   @GetMapping
   public List<ProjectResponse> getProjects(
       @RequestParam(value = "status", required = false) @Parameter(description = "상태")
-          String status,
+          IssueStatus status,
       @RequestParam(value = "priority", required = false) @Parameter(description = "중요도")
-          String priority,
+          Priority priority,
       @RequestParam(value = "title", required = false) @Parameter(description = "프로젝트 제목")
           String title,
       @RequestParam(value = "subTitle", required = false) @Parameter(description = "프로젝트 부제목")
@@ -55,36 +64,48 @@ public class ProjectController {
           Long creatorId,
       @RequestParam(value = "assigneeId", required = false) @Parameter(description = "담당자 ID")
           List<Long> assigneeId,
-      @RequestParam(value = "createdDate", required = false)
-          @Parameter(description = "생성일 (yyyy-MM-dd)")
+      @RequestParam(value = "createdDateFrom", required = false)
+          @Parameter(description = "생성일 시작 (yyyy-MM-dd)")
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate createdDate,
-      @RequestParam(value = "updatedDate", required = false)
-          @Parameter(description = "수정일 (yyyy-MM-dd)")
+          LocalDate createdDateFrom,
+      @RequestParam(value = "createdDateTo", required = false)
+          @Parameter(description = "생성일 종료 (yyyy-MM-dd)")
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate updatedDate,
-      @RequestParam(value = "dueDate", required = false)
-          @Parameter(description = "기한일 (yyyy-MM-dd)")
+          LocalDate createdDateTo,
+      @RequestParam(value = "updatedDateFrom", required = false)
+          @Parameter(description = "수정일 시작 (yyyy-MM-dd)")
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate dueDate,
-      @RequestParam(value = "startDate", required = false)
-          @Parameter(description = "시작일 (yyyy-MM-dd)")
+          LocalDate updatedDateFrom,
+      @RequestParam(value = "updatedDateTo", required = false)
+          @Parameter(description = "수정일 종료 (yyyy-MM-dd)")
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate startDate,
-      @RequestParam(value = "endDate", required = false)
-          @Parameter(description = "종료일 (yyyy-MM-dd)")
+          LocalDate updatedDateTo,
+      @RequestParam(value = "dueDateFrom", required = false)
+          @Parameter(description = "기한일 시작 (yyyy-MM-dd)")
           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-          LocalDate endDate,
+          LocalDate dueDateFrom,
+      @RequestParam(value = "dueDateTo", required = false)
+          @Parameter(description = "기한일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate dueDateTo,
+      @RequestParam(value = "startDateFrom", required = false)
+          @Parameter(description = "시작일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDateFrom,
+      @RequestParam(value = "startDateTo", required = false)
+          @Parameter(description = "시작일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDateTo,
+      @RequestParam(value = "endDateFrom", required = false)
+          @Parameter(description = "종료일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDateFrom,
+      @RequestParam(value = "endDateTo", required = false)
+          @Parameter(description = "종료일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDateTo,
       @RequestParam(value = "tag", required = false) @Parameter(description = "태그") Set<String> tag)
       throws BaseException {
-    /**
-     * TODO
-     *
-     * <p>- 날짜 관련 검색 조건들 (createdDate, updatedDate, dueDate, startDate, endDate) 단일 날짜 검색이 아닌 범위
-     * 검색으로 변경
-     *
-     * <p>- 페이징 처리 추가
-     */
     return projectService
         .getProjectsByKeywords(
             status,
@@ -93,15 +114,20 @@ public class ProjectController {
             subTitle,
             creatorId,
             assigneeId,
-            createdDate,
-            updatedDate,
-            dueDate,
-            startDate,
-            endDate,
+            createdDateFrom,
+            createdDateTo,
+            updatedDateFrom,
+            updatedDateTo,
+            dueDateFrom,
+            dueDateTo,
+            startDateFrom,
+            startDateTo,
+            endDateFrom,
+            endDateTo,
             tag)
         .stream()
         .map(projectMapper::toResponse)
-        .collect(java.util.stream.Collectors.toList());
+        .collect(Collectors.toList());
   }
 
   @Operation(description = "프로젝트를 조회한다.")
@@ -164,8 +190,7 @@ public class ProjectController {
       @RequestBody Map<String, Object> req,
       @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
-    projectService.updateProjectsById(id, req, userDetails);
-    //    projectService.putProjectsById(id, req, userDetails);
+    projectService.putProjectsById(id, req, userDetails);
   }
 
   /**

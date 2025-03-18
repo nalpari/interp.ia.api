@@ -1,10 +1,7 @@
 package net.devgrr.interp.ia.api.work.project;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Expression;
-import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.querydsl.jpa.impl.JPAUpdateClause;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,15 +19,13 @@ import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
 import net.devgrr.interp.ia.api.member.MemberService;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import net.devgrr.interp.ia.api.work.history.HistoryService;
-import net.devgrr.interp.ia.api.work.history.entity.History;
-import net.devgrr.interp.ia.api.work.history.entity.History.HistoryBuilder;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
 import net.devgrr.interp.ia.api.work.project.entity.QProject;
-import net.devgrr.interp.ia.api.work.project.entity.QProjectAssignee;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -44,39 +39,43 @@ public class ProjectService {
   private final HistoryService historyService;
 
   private final QProject qProject = QProject.project;
-  private final QProjectAssignee qProjectAssignee = QProjectAssignee.projectAssignee;
 
   public List<Project> getProjects() {
     return projectRepository.findAll();
   }
 
   public List<Project> getProjectsByKeywords(
-      String status,
-      String priority,
+      IssueStatus status,
+      Priority priority,
       String title,
       String subTitle,
       Long creatorId,
       List<Long> assigneeId,
-      LocalDate createdDate,
-      LocalDate updatedDate,
-      LocalDate dueDate,
-      LocalDate startDate,
-      LocalDate endDate,
+      LocalDate createdDateFrom,
+      LocalDate createdDateTo,
+      LocalDate updatedDateFrom,
+      LocalDate updatedDateTo,
+      LocalDate dueDateFrom,
+      LocalDate dueDateTo,
+      LocalDate startDateFrom,
+      LocalDate startDateTo,
+      LocalDate endDateFrom,
+      LocalDate endDateTo,
       Set<String> tag)
       throws BaseException {
     try {
       BooleanBuilder builder = new BooleanBuilder();
 
-      if (status != null && !status.trim().isEmpty()) {
-        builder.and(qProject.status.eq(IssueStatus.valueOf(status)));
+      if (status != null) {
+        builder.and(qProject.status.eq(status));
       }
-      if (priority != null && !priority.trim().isEmpty()) {
-        builder.and(qProject.priority.eq(Priority.valueOf(priority)));
+      if (priority != null) {
+        builder.and(qProject.priority.eq(priority));
       }
-      if (title != null && !title.trim().isEmpty()) {
+      if (StringUtils.hasText(title)) {
         builder.and(qProject.title.like("%" + title + "%"));
       }
-      if (subTitle != null && !subTitle.trim().isEmpty()) {
+      if (StringUtils.hasText(subTitle)) {
         builder.and(qProject.subTitle.like("%" + subTitle + "%"));
       }
       if (creatorId != null && creatorId > 0) {
@@ -85,23 +84,28 @@ public class ProjectService {
       if (assigneeId != null && !assigneeId.isEmpty()) {
         builder.and(qProject.assignee.any().id.in(assigneeId));
       }
-      if (createdDate != null && !createdDate.equals(LocalDate.MIN)) {
-        builder.and(qProject.createdDate.eq(createdDate.atStartOfDay()));
+      if (isValidDateRange(createdDateFrom, createdDateTo)) {
+        builder.and(
+            qProject.createdDate.between(
+                createdDateFrom.atStartOfDay(), createdDateTo.atStartOfDay()));
       }
-      if (updatedDate != null && !updatedDate.equals(LocalDate.MIN)) {
-        builder.and(qProject.updatedDate.eq(updatedDate.atStartOfDay()));
+      if (isValidDateRange(updatedDateFrom, updatedDateTo)) {
+        builder.and(
+            qProject.updatedDate.between(
+                updatedDateFrom.atStartOfDay(), updatedDateTo.atStartOfDay()));
       }
-      if (dueDate != null && !dueDate.equals(LocalDate.MIN)) {
-        builder.and(qProject.dueDate.eq(dueDate.atStartOfDay()));
+      if (isValidDateRange(dueDateFrom, dueDateTo)) {
+        builder.and(qProject.dueDate.between(dueDateFrom.atStartOfDay(), dueDateTo.atStartOfDay()));
       }
-      if (startDate != null && !startDate.equals(LocalDate.MIN)) {
-        builder.and(qProject.startDate.eq(startDate.atStartOfDay()));
+      if (isValidDateRange(startDateFrom, startDateTo)) {
+        builder.and(
+            qProject.startDate.between(startDateFrom.atStartOfDay(), startDateTo.atStartOfDay()));
       }
-      if (endDate != null && !endDate.equals(LocalDate.MIN)) {
-        builder.and(qProject.endDate.eq(endDate.atStartOfDay()));
+      if (isValidDateRange(endDateFrom, endDateTo)) {
+        builder.and(qProject.endDate.between(endDateFrom.atStartOfDay(), endDateTo.atStartOfDay()));
       }
       if (tag != null && !tag.isEmpty()) {
-        builder.and(qProject.tag.contains((Expression<String>) tag));
+        builder.and(qProject.tag.any().in(tag));
       }
 
       return builder.hasValue()
@@ -111,6 +115,14 @@ public class ProjectService {
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  private boolean isValidDateRange(LocalDate dateFrom, LocalDate dateTo) {
+    return dateTo != null
+        && dateFrom != null
+        && !dateTo.equals(LocalDate.MIN)
+        && !dateFrom.equals(LocalDate.MIN)
+        && !dateFrom.isAfter(dateTo);
   }
 
   public Project getProjectsById(Long id) {
@@ -132,9 +144,10 @@ public class ProjectService {
   }
 
   @Transactional
-  public void updateProjectsById(Long id, Map<String, Object> req, UserDetails userDetails)
+  public void putProjectsById(Long id, Map<String, Object> req, UserDetails userDetails)
       throws BaseException {
     try {
+
       Project originProject = getProjectsById(id);
       if (originProject == null) {
         throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다.");
@@ -144,41 +157,35 @@ public class ProjectService {
       Object value = req.values().iterator().next();
       Member modifier = memberService.getUsersByEmail(userDetails.getUsername());
 
-      JPAUpdateClause updateProject =
-          queryFactory
-              .update(qProject)
-              .set(qProject.updatedDate, LocalDateTime.now())
-              .where(qProject.id.eq(id));
-
       switch (key) {
         case "status":
           IssueStatus newStatus = IssueStatus.valueOf(value.toString());
-          updateProject.set(qProject.status, newStatus).execute();
           historyService.setHistory(
               id,
               Objects.toString(originProject.getStatus(), null),
               newStatus.toString(),
               key,
               modifier);
+          projectRepository.save(projectMapper.putProjectStatus(originProject, 0, newStatus));
           break;
         case "priority":
           Priority newPriority = Priority.valueOf(value.toString());
-          updateProject.set(qProject.priority, newPriority).execute();
           historyService.setHistory(
               id,
               Objects.toString(originProject.getPriority(), null),
               newPriority.toString(),
               key,
               modifier);
+          projectRepository.save(projectMapper.putProjectPriority(originProject, 0, newPriority));
           break;
         case "title":
-          updateProject.set(qProject.title, value.toString()).execute();
           historyService.setHistory(id, originProject.getTitle(), value.toString(), key, modifier);
+          projectRepository.save(projectMapper.putProjectTitle(originProject, 0, value.toString()));
           break;
         case "subTitle":
           String newSubTitle = Objects.toString(value, null);
-          updateProject.set(qProject.subTitle, newSubTitle).execute();
           historyService.setHistory(id, originProject.getSubTitle(), newSubTitle, key, modifier);
+          projectRepository.save(projectMapper.putProjectSubTitle(originProject, 0, newSubTitle));
           break;
         case "assigneeId":
           String originAssignee =
@@ -189,19 +196,6 @@ public class ProjectService {
               value != null
                   ? memberService.getUsersByIds(new HashSet<>((List<Integer>) value))
                   : null;
-          //          querydsl 에러로 인해 임시 주석 처리
-          //          queryFactory
-          //              .delete(qProjectAssignee)
-          //              .where((qProjectAssignee.project.id.eq(id)))
-          //              .execute();
-          //          for (Member assignee : newAssignee) {
-          //            queryFactory
-          //                .insert(qProjectAssignee)
-          //                .columns(qProjectAssignee.project.id, qProjectAssignee.member.id)
-          //                .values(id, assignee.getId())
-          //                .execute();
-          //          }
-          projectRepository.save(projectMapper.putProjectAssignee(originProject, 0, newAssignee));
           historyService.setHistory(
               id,
               originAssignee,
@@ -210,6 +204,7 @@ public class ProjectService {
                   : null,
               key,
               modifier);
+          projectRepository.save(projectMapper.putProjectAssignee(originProject, 0, newAssignee));
           break;
         case "dueDate":
         case "startDate":
@@ -225,29 +220,26 @@ public class ProjectService {
                   ? LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                       .atStartOfDay()
                   : null;
-          DateTimePath<LocalDateTime> updateTarget =
-              key.equals("dueDate")
-                  ? qProject.dueDate
-                  : key.equals("startDate") ? qProject.startDate : qProject.endDate;
-          updateProject.set(updateTarget, newDate).execute();
           historyService.setHistory(
               id, originDate, newDate != null ? newDate.toString() : null, key, modifier);
+          projectRepository.save(updateProjectDateField(originProject, key, newDate));
           break;
         case "description":
           String newDescription = Objects.toString(value, null);
-          updateProject.set(qProject.description, newDescription);
           historyService.setHistory(
               id, originProject.getDescription(), newDescription, key, modifier);
+          projectRepository.save(
+              projectMapper.putProjectDescription(originProject, 0, newDescription));
           break;
         case "tag":
           Set<String> newTag = value != null ? new HashSet<>((List<String>) value) : null;
-          updateProject.set(qProject.tag, newTag).execute();
           historyService.setHistory(
               id,
-              Objects.toString(originProject.getTag(), null),
+              !originProject.getTag().isEmpty() ? originProject.getTag().toString() : null,
               Objects.toString(newTag, null),
               key,
               modifier);
+          projectRepository.save(projectMapper.putProjectTag(originProject, 0, newTag));
           break;
         default:
           throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
@@ -258,122 +250,14 @@ public class ProjectService {
     }
   }
 
-  @Transactional
-  public void putProjectsById(Long id, Map<String, Object> req, UserDetails userDetails)
+  private Project updateProjectDateField(Project project, String key, LocalDateTime date)
       throws BaseException {
-    Project originProject = getProjectsById(id);
-    if (originProject == null) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다.");
-    }
-
-    try {
-      HistoryBuilder history =
-          History.builder()
-              .issueId(id)
-              .modifier(memberService.getUsersByEmail(userDetails.getUsername()));
-      String key = req.keySet().iterator().next();
-      Object value = req.values().iterator().next();
-      Project saveProject = updateProjectField(originProject, key, value, history);
-
-      /* MEMO: 이전 데이터와의 변경 여부는 Front 에서 처리 후 넘어오기 때문에 값 변경 validation 처리 생략하고 업데이트 */
-      projectRepository.save(saveProject);
-      //      historyService.setHistory(history.build());
-
-    } catch (Exception e) {
-      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  private Project updateProjectField(
-      Project originProject, String key, Object value, HistoryBuilder history)
-      throws BaseException {
-    try {
-      Project saveProject = null;
-      switch (key) {
-        case "status":
-          String originStatus = Objects.toString(originProject.getStatus(), null);
-          IssueStatus status = IssueStatus.valueOf(value.toString());
-          saveProject = projectMapper.putProjectStatus(originProject, status);
-          history.fieldName(key).beforeValue(originStatus).afterValue(status.toString());
-          break;
-        case "priority":
-          String originPriority = Objects.toString(originProject.getPriority(), null);
-          Priority priority = Priority.valueOf(value.toString());
-          saveProject = projectMapper.putProjectPriority(originProject, priority);
-          history.fieldName(key).beforeValue(originPriority).afterValue(priority.toString());
-          break;
-        case "title":
-          String originTitle = originProject.getTitle();
-          saveProject = projectMapper.putProjectTitle(originProject, value.toString());
-          history.fieldName(key).beforeValue(originTitle).afterValue(value.toString());
-          break;
-        case "subTitle":
-          String originSubTitle = Objects.toString(originProject.getSubTitle(), null);
-          String subTitle = Objects.toString(value, null);
-          saveProject = projectMapper.putProjectSubTitle(originProject, subTitle);
-          history.fieldName(key).beforeValue(originSubTitle).afterValue(subTitle);
-          break;
-        case "assignee":
-          String originAssignee =
-              Objects.toString(
-                  originProject.getAssignee().stream().map(Member::getId).toList(), null);
-          Set<Member> assignee =
-              value != null
-                  ? memberService.getUsersByIds(new HashSet<>((List<Integer>) value))
-                  : null;
-          saveProject = projectMapper.putProjectAssignee(originProject, 0, assignee);
-          history
-              .fieldName(key)
-              .beforeValue(originAssignee)
-              .afterValue(Objects.toString(assignee.stream().map(Member::getId).toList(), null));
-          break;
-        case "dueDate":
-        case "startDate":
-        case "endDate":
-          String originDate = Objects.toString(originProject.getEndDate(), null);
-          LocalDateTime newDate =
-              value != null
-                  ? LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                      .atStartOfDay()
-                  : LocalDateTime.MIN;
-          saveProject = updateProjectDateField(originProject, key, newDate);
-          history
-              .fieldName(key)
-              .beforeValue(originDate)
-              .afterValue(Objects.toString(newDate, null));
-          break;
-        case "description":
-          String originDescription = Objects.toString(originProject.getDescription(), null);
-          String subDescription = Objects.toString(value, null);
-          saveProject = projectMapper.putProjectDescription(originProject, subDescription);
-          history.fieldName(key).beforeValue(originDescription).afterValue(subDescription);
-          break;
-        case "tag":
-          String originTag = Objects.toString(originProject.getTag(), null);
-          Set<String> tag = value != null ? new HashSet<>((List<String>) value) : null;
-          saveProject = projectMapper.putProjectTag(originProject, 0, tag);
-          history.fieldName(key).beforeValue(originTag).afterValue(Objects.toString(tag, null));
-          break;
-        default:
-          throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
-      }
-      return saveProject;
-    } catch (Exception e) {
-      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  private Project updateProjectDateField(Project project, String key, LocalDateTime date) {
-    switch (key) {
-      case "dueDate":
-        return projectMapper.putProjectDueDate(project, date);
-      case "startDate":
-        return projectMapper.putProjectStartDate(project, date);
-      case "endDate":
-        return projectMapper.putProjectEndDate(project, date);
-      default:
-        return null;
-    }
+    return switch (key) {
+      case "dueDate" -> projectMapper.putProjectDueDate(project, 0, date);
+      case "startDate" -> projectMapper.putProjectStartDate(project, 0, date);
+      case "endDate" -> projectMapper.putProjectEndDate(project, 0, date);
+      default -> throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "날짜 필드가 아닙니다.");
+    };
   }
 
   @Transactional

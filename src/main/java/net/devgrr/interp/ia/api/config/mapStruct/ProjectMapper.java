@@ -26,11 +26,6 @@ public interface ProjectMapper {
     return Priority.valueOf(priority);
   }
 
-  @Named("toDate")
-  static LocalDateTime toDate(LocalDateTime date) {
-    return date.equals(LocalDateTime.MIN) ? null : date;
-  }
-
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "subIssues", ignore = true)
   @Mapping(
@@ -44,35 +39,38 @@ public interface ProjectMapper {
 
   ProjectResponse toResponse(Project project);
 
-  @Mapping(target = "status", source = "status")
-  Project putProjectStatus(@MappingTarget Project project, IssueStatus status);
-
-  @Mapping(target = "priority", source = "priority")
-  Project putProjectPriority(@MappingTarget Project project, Priority priority);
-
-  @Mapping(target = "title", source = "title")
-  Project putProjectTitle(@MappingTarget Project project, String title);
-
-  @Mapping(target = "subTitle", source = "subTitle")
-  Project putProjectSubTitle(@MappingTarget Project project, String subTitle);
-
-  @Mapping(target = "dueDate", source = "dueDate", qualifiedByName = "toDate")
-  Project putProjectDueDate(@MappingTarget Project project, LocalDateTime dueDate);
-
-  @Mapping(target = "startDate", source = "startDate", qualifiedByName = "toDate")
-  Project putProjectStartDate(@MappingTarget Project project, LocalDateTime startDate);
-
-  @Mapping(target = "endDate", source = "endDate", qualifiedByName = "toDate")
-  Project putProjectEndDate(@MappingTarget Project project, LocalDateTime endDate);
-
-  @Mapping(target = "description", source = "description")
-  Project putProjectDescription(@MappingTarget Project project, String description);
-
   /*
    * 참고
-   * List 유형을 파라미터로 넘겼을 때 아래와 같은 에러를 막기 위해 dummy 파라미터를 추가함
-   * ERROR: Can't generate mapping method from iterable type from java stdlib to non-iterable type.
+   * - null 데이터도 그대로 업데이트 하기 위해 dummy 파라미터 추가
+   * - List 유형을 파라미터로 넘겼을 때 아래와 같은 에러를 막기 위해 dummy 파라미터 추가
+   *      ERROR: Can't generate mapping method from iterable type from java stdlib to non-iterable type.
    * */
+
+  @Mapping(target = "status", source = "status")
+  Project putProjectStatus(@MappingTarget Project project, Integer dummy, IssueStatus status);
+
+  @Mapping(target = "priority", source = "priority")
+  Project putProjectPriority(@MappingTarget Project project, Integer dummy, Priority priority);
+
+  @Mapping(target = "title", source = "title")
+  Project putProjectTitle(@MappingTarget Project project, Integer dummy, String title);
+
+  @Mapping(target = "subTitle", source = "subTitle")
+  Project putProjectSubTitle(@MappingTarget Project project, Integer dummy, String subTitle);
+
+  @Mapping(target = "dueDate", source = "dueDate")
+  Project putProjectDueDate(@MappingTarget Project project, Integer dummy, LocalDateTime dueDate);
+
+  @Mapping(target = "startDate", source = "startDate")
+  Project putProjectStartDate(
+      @MappingTarget Project project, Integer dummy, LocalDateTime startDate);
+
+  @Mapping(target = "endDate", source = "endDate")
+  Project putProjectEndDate(@MappingTarget Project project, Integer dummy, LocalDateTime endDate);
+
+  @Mapping(target = "description", source = "description")
+  Project putProjectDescription(@MappingTarget Project project, Integer dummy, String description);
+
   @Mapping(target = "assignee", source = "assignee")
   Project putProjectAssignee(@MappingTarget Project project, Integer dummy, Set<Member> assignee);
 
