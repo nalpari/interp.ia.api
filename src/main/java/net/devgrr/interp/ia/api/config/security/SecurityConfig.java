@@ -1,6 +1,7 @@
 package net.devgrr.interp.ia.api.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.jwt.JwtService;
 import net.devgrr.interp.ia.api.jwt.filter.JwtAuthenticationProcessingFilter;
@@ -50,6 +51,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             (authorizeHttpRequests) ->
                 authorizeHttpRequests
+                    .dispatcherTypeMatchers(DispatcherType.ASYNC)
+                    .hasAnyRole("USER", "ADMIN")
                     .requestMatchers(
                         new AntPathRequestMatcher("/swagger-ui/**"),
                         new AntPathRequestMatcher("/v3/api-docs/**"))

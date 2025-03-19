@@ -70,6 +70,6 @@ public class Member extends BaseEntity {
   private Boolean isActive;
 
   public Member() {
-      super();
+    super();
   }
 }
