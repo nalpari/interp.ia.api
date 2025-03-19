@@ -57,7 +57,7 @@ public class memberControllerTest {
 
     memberRequest =
         new MemberRequest(
-            "test@test.com", "test", "test", null, "position", "department", "job", null, null);
+            "test@test.com", "test", "test", "department", "job", "position", null, null, null);
   }
 
   @DisplayName("회원가입 테스트")
