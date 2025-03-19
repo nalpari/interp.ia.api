@@ -40,7 +40,6 @@ public class FileService {
 
   public void uploadMemberFile(MultipartFile file) throws Exception {
     createDirectory();
-    //    upload 한 파일 읽기 위해 서버에 저장
     String filePath = FILE_DIRECTORY + file.getOriginalFilename();
     File savedFile = new File(filePath);
     file.transferTo(savedFile);

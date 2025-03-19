@@ -4,11 +4,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Stream;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import net.devgrr.interp.ia.api.config.exception.BaseException;
+import net.devgrr.interp.ia.api.config.exception.ErrorCode;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -27,6 +28,7 @@ public class ExelStreamReader<T> {
   private int currentSheet;
 
   @Setter private String[] fieldNames;
+  private String[] headers;
   @Setter private Class<T> clazz;
 
   @SneakyThrows
@@ -42,17 +44,18 @@ public class ExelStreamReader<T> {
     this.currentRow = 1;
   }
 
-  public Stream<T> read() {
-    if(this.workbook == null) {
+  public Stream<T> read() throws BaseException {
+    if (this.workbook == null) {
       this.open();
+      readHeader();
     }
-    if(currentSheet >= workbook.getNumberOfSheets()) {
+    if (currentSheet >= workbook.getNumberOfSheets()) {
       return null;
     }
 
-    if(currentRow > sheet.getLastRowNum()) {
+    if (currentRow > sheet.getLastRowNum()) {
       currentSheet++;
-      if(currentSheet >= workbook.getNumberOfSheets()) {
+      if (currentSheet >= workbook.getNumberOfSheets()) {
         return null;
       }
       this.sheet = workbook.getSheetAt(currentSheet);
@@ -61,47 +64,56 @@ public class ExelStreamReader<T> {
     }
 
     Row row = sheet.getRow(currentRow);
-    if(row == null) {
+    if (row == null) {
       currentRow++;
       return read();
     }
     Iterator<Row> rowIterator = sheet.iterator();
-    if(rowIterator.hasNext()) {
+    if (rowIterator.hasNext()) {
       rowIterator.next();
     }
 
     return Stream.generate(() -> rowIterator.hasNext() ? rowIterator.next() : null)
-            .takeWhile(Objects::nonNull)
-            .map(rowData-> {
+        .takeWhile(Objects::nonNull)
+        .map(
+            rowData -> {
               try {
                 return mappingData(rowData);
-              } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
+              } catch (Exception e) {
                 e.printStackTrace();
                 return null;
               }
             });
   }
 
-  private T mappingData(Row row) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-    List<Object> values = new ArrayList<>();
-    for (int i =0; i<fieldNames.length; i++) {
+  private T mappingData(Row row) throws Exception {
+    Object[] values = new Object[headers.length];
+    Map<String, Object> valueMap = new HashMap<>();
+
+    for (int i = 0; i < headers.length; i++) {
       Cell cell = row.getCell(i);
 
       Object value = getCellValue(cell);
-      values.add(value.toString());
+      valueMap.put(headers[i], value);
     }
-    Constructor<T> constructor = clazz.getDeclaredConstructor(
-            Arrays.stream(clazz.getDeclaredFields())
-                    .map(Field::getType)
-                    .toArray(Class[]::new)
-    );
+    for (int i = 0; i < fieldNames.length; i++) {
+      values[i] = valueMap.get(fieldNames[i]);
+    }
+
+    Constructor<T> constructor =
+        clazz.getDeclaredConstructor(
+            Arrays.stream(clazz.getDeclaredFields()).map(Field::getType).toArray(Class[]::new));
     currentRow++;
-    return constructor.newInstance(values.toArray());
+    try {
+      return constructor.newInstance(values);
+    } catch (IllegalArgumentException e) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "MemberRequest 필드 타입 불일치");
+    }
   }
 
   private Object getCellValue(Cell cell) {
     if (cell == null) {
-      return null;
+      return "";
     }
     switch (cell.getCellType()) {
       case NUMERIC -> {
@@ -116,6 +128,20 @@ public class ExelStreamReader<T> {
       default -> {
         return "";
       }
+    }
+  }
+
+  private void readHeader() throws BaseException {
+    List<String> header = new ArrayList<>();
+    Row row = sheet.getRow(0);
+    for (int i = 0; i < row.getPhysicalNumberOfCells(); i++) {
+      Cell cell = row.getCell(i);
+      header.add(cell.getStringCellValue());
+    }
+    if (fieldNames.length == header.size()) {
+      headers = header.toArray(new String[0]);
+    } else {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "컬럼 수 맞지 않음");
     }
   }
 }

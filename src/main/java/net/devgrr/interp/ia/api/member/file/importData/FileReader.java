@@ -36,7 +36,7 @@ public class FileReader {
     }
   }
 
-  public void exelReader(String filePath, boolean isXlsx) {
+  public void exelReader(String filePath, boolean isXlsx) throws BaseException {
     ExelStreamReader<MemberRequest> exelStreamReader = new ExelStreamReader<>();
     exelStreamReader.setFile(new File(filePath));
     exelStreamReader.setXlsx(isXlsx);
