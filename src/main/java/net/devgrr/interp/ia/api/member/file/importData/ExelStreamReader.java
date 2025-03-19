@@ -2,13 +2,11 @@ package net.devgrr.interp.ia.api.member.file.importData;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Stream;
-
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -32,7 +30,7 @@ public class ExelStreamReader<T> {
   @Setter private Class<T> clazz;
 
   @SneakyThrows
-  private void open() throws IOException {
+  private void open() {
     FileInputStream fis = new FileInputStream(file);
     if (isXlsx) {
       this.workbook = new XSSFWorkbook(fis);
@@ -44,7 +42,7 @@ public class ExelStreamReader<T> {
     this.currentRow = 1;
   }
 
-  public Stream<T> read() throws IOException {
+  public Stream<T> read() {
     if(this.workbook == null) {
       this.open();
     }

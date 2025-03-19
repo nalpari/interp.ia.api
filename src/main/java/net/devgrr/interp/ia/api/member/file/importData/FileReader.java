@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
@@ -39,7 +36,7 @@ public class FileReader {
     }
   }
 
-  public void exelReader(String filePath, boolean isXlsx) throws IOException {
+  public void exelReader(String filePath, boolean isXlsx) {
     ExelStreamReader<MemberRequest> exelStreamReader = new ExelStreamReader<>();
     exelStreamReader.setFile(new File(filePath));
     exelStreamReader.setXlsx(isXlsx);
