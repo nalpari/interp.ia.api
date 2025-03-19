@@ -1,8 +1,6 @@
 package net.devgrr.interp.ia.api.member;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
@@ -13,7 +11,6 @@ import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @RequiredArgsConstructor
 @Service
@@ -59,7 +56,7 @@ public class MemberService {
     try {
       memberRepository.save(member);
     } catch (Exception e) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+      throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "회원가입에 실패했습니다.");
     }
     return member;
   }
@@ -71,18 +68,8 @@ public class MemberService {
             .findByEmail(userDetails.getUsername())
             .orElseThrow(
                 () -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보를 찾을 수 없습니다."));
-
-    if (!member.getId().equals(req.id())) {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보가 일치하지 않습니다.");
-    }
-    if (StringUtils.hasText(req.email())) {
-      if (memberRepository.existsByEmail(req.email())) {
-        throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "이미 존재하는 email 입니다.");
-      }
-    }
-    memberMapper.updateMember(req, member);
     try {
-      memberRepository.save(member);
+      memberMapper.updateMember(req, member);
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :" + e.getMessage());
     }
@@ -95,7 +82,7 @@ public class MemberService {
             .findByEmail(email)
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
     try {
-      memberRepository.save(memberMapper.deactivateMember(member));
+      memberMapper.deactivateMember(member, member);
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :" + e.getMessage());
     }
@@ -109,7 +96,7 @@ public class MemberService {
             .orElseThrow(() -> new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이메일 입니다."));
 
     try {
-      memberRepository.save(memberMapper.activeMember(member));
+      memberMapper.activeMember(member, member);
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, "수정에 실패했습니다. :" + e.getMessage());
     }
