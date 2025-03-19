@@ -91,28 +91,16 @@ public class MemberController {
     memberService.putUsersActiveByEmail(email);
   }
 
-  @Operation(
-      description =
-          "파일을 입력받아 데이터를 저장한다."
-              + "<br>확장자가 .csv, .xlsx, .xls 인 것만 가능"
-              + "<br>"
-              + "db에 이미 같은 이메일이 존재 할 때 건너뛰고 저장할 지, 업데이트 할 지 지정 (skip = 건너뛰고 저장 | update = 업데이트)")
-  @SwaggerBody(
-          content = @Content(
-                  encoding = @Encoding(name = "dataSkip", contentType = MediaType.APPLICATION_JSON_VALUE)
-          )
-  )
+  @Operation(description = "파일을 입력받아 데이터를 저장한다.<br>확장자가 .csv, .xlsx, .xls 인 것만 가능<br>입력된 데이터 중 같은 email 존재 시 해당 데이터 제외하고 저장")
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public void uploadMemberFile(
-      @RequestPart("file") MultipartFile file) throws Exception {
+  public void uploadMemberFile(@RequestPart("file")
+                                 @Parameter(description = "MemberRequest 에 정의된 모든 필드들이 포함되어야 함") MultipartFile file) throws Exception {
     memberFileService.uploadMemberFile(file);
   }
 
   @Operation(
       description =
-          "모든 회원 정보를 파일로 내려받는다."
-              + "<br>csv 파일과 엑셀 파일 중 선택"
-              + "<br>엑셀 파일로 다운로드 시 포맷터 적용은 다운로드 받을 엑셀 파일 필요, ")
+          "모든 회원 정보를 파일로 내려받는다.<br>csv 파일과 엑셀 파일 중 선택<br>엑셀 파일로 다운로드 시 포맷터 적용은 다운로드 받을 엑셀 파일 필요")
   @SwaggerBody(
       content =
           @Content(
@@ -128,7 +116,6 @@ public class MemberController {
     String fileNameEncoded = URLEncoder.encode(saveFile.getName(), StandardCharsets.UTF_8);
 
     //    데이터 변환을 위해 저장했던 파일을 response 응답한 후 바로 삭제하기 위해 StreamingBody 사용
-    //    파일을 Streaming 하면서 다운로드 완료 후 삭제함 Stream 을 명시적으로 닫지 않음
     StreamingResponseBody body =
         outputStream -> memberFileService.getStreamingResponse(outputStream, saveFile);
 
