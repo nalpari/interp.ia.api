@@ -6,12 +6,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
+import net.devgrr.interp.ia.api.config.issue.IssueStatus;
+import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
@@ -40,77 +43,91 @@ public class ProjectController {
   private final ProjectService projectService;
   private final ProjectMapper projectMapper;
 
-  @Operation(description = "프로젝트 목록을 조회한다. <br>검색 조건이 있다면 해당 조건이 적용된 프로젝트를 조회한다.")
+  @Operation(
+      description =
+          """
+          프로젝트 목록을 조회한다. \n
+          검색 조건은 전부 선택 사항이며, 조건이 여러 개 있을 경우 AND 조건으로 검색한다. <br>
+          검색 조건이 없을 경우 전체 목록을 조회한다.
+          """)
   @GetMapping
   public List<ProjectResponse> getProjects(
       @RequestParam(value = "status", required = false) @Parameter(description = "상태")
-          String status,
+          IssueStatus status,
       @RequestParam(value = "priority", required = false) @Parameter(description = "중요도")
-          String priority,
+          Priority priority,
       @RequestParam(value = "title", required = false) @Parameter(description = "프로젝트 제목")
           String title,
       @RequestParam(value = "subTitle", required = false) @Parameter(description = "프로젝트 부제목")
           String subTitle,
-      @RequestParam(value = "creator", required = false) @Parameter(description = "생성자")
-          String creator,
-      @RequestParam(value = "assignee", required = false) @Parameter(description = "담당자")
-          String assignee,
-      @RequestParam(value = "createdDate", required = false)
-          @Parameter(description = "생성일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime createdDate,
-      @RequestParam(value = "updatedDate", required = false)
-          @Parameter(description = "수정일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime updatedDate,
-      @RequestParam(value = "dueDate", required = false)
-          @Parameter(description = "기한일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime dueDate,
-      @RequestParam(value = "startDate", required = false)
-          @Parameter(description = "시작일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime startDate,
-      @RequestParam(value = "endDate", required = false)
-          @Parameter(description = "종료일 (yyyy-MM-dd)")
-          @DateTimeFormat(pattern = "yyyyMMdd")
-          LocalDateTime endDate,
+      @RequestParam(value = "creatorId", required = false) @Parameter(description = "생성자 ID")
+          Long creatorId,
+      @RequestParam(value = "assigneeId", required = false) @Parameter(description = "담당자 ID")
+          List<Long> assigneeId,
+      @RequestParam(value = "createdDateFrom", required = false)
+          @Parameter(description = "생성일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate createdDateFrom,
+      @RequestParam(value = "createdDateTo", required = false)
+          @Parameter(description = "생성일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate createdDateTo,
+      @RequestParam(value = "updatedDateFrom", required = false)
+          @Parameter(description = "수정일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate updatedDateFrom,
+      @RequestParam(value = "updatedDateTo", required = false)
+          @Parameter(description = "수정일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate updatedDateTo,
+      @RequestParam(value = "dueDateFrom", required = false)
+          @Parameter(description = "기한일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate dueDateFrom,
+      @RequestParam(value = "dueDateTo", required = false)
+          @Parameter(description = "기한일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate dueDateTo,
+      @RequestParam(value = "startDateFrom", required = false)
+          @Parameter(description = "시작일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDateFrom,
+      @RequestParam(value = "startDateTo", required = false)
+          @Parameter(description = "시작일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate startDateTo,
+      @RequestParam(value = "endDateFrom", required = false)
+          @Parameter(description = "종료일 시작 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDateFrom,
+      @RequestParam(value = "endDateTo", required = false)
+          @Parameter(description = "종료일 종료 (yyyy-MM-dd)")
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+          LocalDate endDateTo,
       @RequestParam(value = "tag", required = false) @Parameter(description = "태그") Set<String> tag)
       throws BaseException {
-    if ((status != null && !status.trim().isEmpty())
-        || (priority != null) && !priority.trim().isEmpty()
-        || (title != null && !title.trim().isEmpty())
-        || (subTitle != null && !subTitle.trim().isEmpty())
-        || (creator != null && !creator.trim().isEmpty())
-        || (assignee != null && !assignee.trim().isEmpty())
-        || (createdDate != null && !createdDate.equals(LocalDateTime.MIN))
-        || (updatedDate != null && !updatedDate.equals(LocalDateTime.MIN))
-        || (dueDate != null && !dueDate.equals(LocalDateTime.MIN))
-        || (startDate != null && !startDate.equals(LocalDateTime.MIN))
-        || (endDate != null && !endDate.equals(LocalDateTime.MIN))
-        || (tag != null && !tag.isEmpty())) {
-      return projectService
-          .getProjectsByKeywords(
-              status,
-              priority,
-              title,
-              subTitle,
-              creator,
-              assignee,
-              createdDate,
-              updatedDate,
-              dueDate,
-              startDate,
-              endDate,
-              tag)
-          .stream()
-          .map(projectMapper::toResponse)
-          .collect(java.util.stream.Collectors.toList());
-    } else {
-      return projectService.getProjects().stream()
-          .map(projectMapper::toResponse)
-          .collect(java.util.stream.Collectors.toList());
-    }
+    return projectService
+        .getProjectsByKeywords(
+            status,
+            priority,
+            title,
+            subTitle,
+            creatorId,
+            assigneeId,
+            createdDateFrom,
+            createdDateTo,
+            updatedDateFrom,
+            updatedDateTo,
+            dueDateFrom,
+            dueDateTo,
+            startDateFrom,
+            startDateTo,
+            endDateFrom,
+            endDateTo,
+            tag)
+        .stream()
+        .map(projectMapper::toResponse)
+        .collect(Collectors.toList());
   }
 
   @Operation(description = "프로젝트를 조회한다.")
@@ -133,6 +150,8 @@ public class ProjectController {
   /**
    * TODO
    *
+   * <p>- 하위 이슈 처리 추가
+   *
    * <p>- 수정 권한 처리 추가
    */
   @Operation(
@@ -142,18 +161,18 @@ public class ProjectController {
 
           수정할 필드명은 key, 수정 데이터는 value의 JSON 형태로 입력한다.
 
-          key 목록
-          - title (제목)
-          - subTitle (부제목)
-          - status (상태)
-          - priority (중요도)
-          - assigneeId (담당자 ID)
-          - dueDate (기한일)
-          - startDate (시작일)
-          - endDate (종료일)
-          - description (내용)
-          - tag (태그)
-          - subIssuesId (하위 이슈 ID)
+          key 목록 및 value 타입
+          - title (제목) - String
+          - subTitle (부제목) - String
+          - status (상태) - String
+          - priority (중요도) - String
+          - assigneeId (담당자 ID) - List<Integer>
+          - dueDate (기한일) - String (format: yyyy-MM-dd)
+          - startDate (시작일) - String (format: yyyy-MM-dd)
+          - endDate (종료일) - String (format: yyyy-MM-dd)
+          - description (내용) - String
+          - tag (태그) - List<String>
+          - (TODO) subIssuesId (하위 이슈 ID) - List<Integer>
           """,
       requestBody =
           @io.swagger.v3.oas.annotations.parameters.RequestBody(

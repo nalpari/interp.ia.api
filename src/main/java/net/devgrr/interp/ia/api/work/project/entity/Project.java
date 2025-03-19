@@ -57,6 +57,7 @@ public class Project extends BaseEntity {
   @Schema(description = "중요도")
   private Priority priority;
 
+  @Column(nullable = false)
   @Schema(description = "제목")
   private String title;
 
