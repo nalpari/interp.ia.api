@@ -106,7 +106,7 @@ public class ExelStreamWriter {
   }
 
   private void setRowCol() {
-    this.cell = Character.toLowerCase(dataFormat.charAt(0) - 'a');
+    this.cell = Character.toLowerCase(dataFormat.charAt(0)) - 'a';
     this.row = Integer.parseInt(dataFormat.substring(1)) - 1;
   }
 }
