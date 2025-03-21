@@ -18,6 +18,7 @@ import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
 import net.devgrr.interp.ia.api.member.MemberService;
 import net.devgrr.interp.ia.api.member.entity.Member;
+import net.devgrr.interp.ia.api.util.DateUtil;
 import net.devgrr.interp.ia.api.work.history.HistoryService;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
@@ -84,24 +85,24 @@ public class ProjectService {
       if (assigneeId != null && !assigneeId.isEmpty()) {
         builder.and(qProject.assignee.any().id.in(assigneeId));
       }
-      if (isValidDateRange(createdDateFrom, createdDateTo)) {
+      if (DateUtil.isValidDateRange(createdDateFrom, createdDateTo)) {
         builder.and(
             qProject.createdDate.between(
                 createdDateFrom.atStartOfDay(), createdDateTo.atStartOfDay()));
       }
-      if (isValidDateRange(updatedDateFrom, updatedDateTo)) {
+      if (DateUtil.isValidDateRange(updatedDateFrom, updatedDateTo)) {
         builder.and(
             qProject.updatedDate.between(
                 updatedDateFrom.atStartOfDay(), updatedDateTo.atStartOfDay()));
       }
-      if (isValidDateRange(dueDateFrom, dueDateTo)) {
+      if (DateUtil.isValidDateRange(dueDateFrom, dueDateTo)) {
         builder.and(qProject.dueDate.between(dueDateFrom.atStartOfDay(), dueDateTo.atStartOfDay()));
       }
-      if (isValidDateRange(startDateFrom, startDateTo)) {
+      if (DateUtil.isValidDateRange(startDateFrom, startDateTo)) {
         builder.and(
             qProject.startDate.between(startDateFrom.atStartOfDay(), startDateTo.atStartOfDay()));
       }
-      if (isValidDateRange(endDateFrom, endDateTo)) {
+      if (DateUtil.isValidDateRange(endDateFrom, endDateTo)) {
         builder.and(qProject.endDate.between(endDateFrom.atStartOfDay(), endDateTo.atStartOfDay()));
       }
       if (tag != null && !tag.isEmpty()) {
@@ -115,14 +116,6 @@ public class ProjectService {
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-  }
-
-  private boolean isValidDateRange(LocalDate dateFrom, LocalDate dateTo) {
-    return dateTo != null
-        && dateFrom != null
-        && !dateTo.equals(LocalDate.MIN)
-        && !dateFrom.equals(LocalDate.MIN)
-        && !dateFrom.isAfter(dateTo);
   }
 
   public Project getProjectsById(Long id) {
