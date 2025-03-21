@@ -35,8 +35,6 @@ logging:
     root: info
     org.hibernate.SQL: debug
     net.devgrr.interp.ia.api: debug
-    org.springframework.batch: debug
-    org.springframework.batch.item.file: debug
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
 
