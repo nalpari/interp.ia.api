@@ -8,7 +8,7 @@ import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.IssueType;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
-import net.devgrr.interp.ia.api.work.issue.entity.Issue;
+import net.devgrr.interp.ia.api.work.issue.dto.IssueRefResponse;
 
 @Schema(description = "프로젝트 응답 객체")
 public record ProjectResponse(
@@ -30,4 +30,4 @@ public record ProjectResponse(
     @Schema(description = "종료일") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate,
     @Schema(description = "내용") String description,
     @Schema(description = "태그") Set<String> tag,
-    @Schema(description = "하위 이슈") Set<Issue> subIssues) {}
+    @Schema(description = "하위 이슈") Set<IssueRefResponse> subIssues) {}

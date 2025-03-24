@@ -49,6 +49,7 @@ public class ProjectController {
           프로젝트 목록을 조회한다. \n
           검색 조건은 전부 선택 사항이며, 조건이 여러 개 있을 경우 AND 조건으로 검색한다. <br>
           검색 조건이 없을 경우 전체 목록을 조회한다.
+          프로젝트의 하위 이슈는 최상위 이슈만 조회한다.
           """)
   @GetMapping
   public List<ProjectResponse> getProjects(
@@ -130,7 +131,7 @@ public class ProjectController {
         .collect(Collectors.toList());
   }
 
-  @Operation(description = "프로젝트를 조회한다.")
+  @Operation(description = "프로젝트를 조회한다. 프로젝트의 하위 이슈는 최상위 이슈만 조회한다.")
   @GetMapping("/{id}")
   public ProjectResponse getProjectsById(
       @PathVariable("id") @Parameter(description = "프로젝트 ID") Long id) {

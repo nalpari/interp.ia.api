@@ -1,6 +1,5 @@
 package net.devgrr.interp.ia.api.work.project;
 
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,8 +17,10 @@ import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
 import net.devgrr.interp.ia.api.member.MemberService;
 import net.devgrr.interp.ia.api.member.entity.Member;
+import net.devgrr.interp.ia.api.member.entity.QMember;
 import net.devgrr.interp.ia.api.util.DateUtil;
 import net.devgrr.interp.ia.api.work.history.HistoryService;
+import net.devgrr.interp.ia.api.work.issue.entity.QIssue;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
 import net.devgrr.interp.ia.api.work.project.entity.QProject;
@@ -40,10 +41,8 @@ public class ProjectService {
   private final HistoryService historyService;
 
   private final QProject qProject = QProject.project;
-
-  public List<Project> getProjects() {
-    return projectRepository.findAll();
-  }
+  private final QMember qMember = QMember.member;
+  private final QIssue qIssue = QIssue.issue;
 
   public List<Project> getProjectsByKeywords(
       IssueStatus status,
@@ -65,53 +64,43 @@ public class ProjectService {
       Set<String> tag)
       throws BaseException {
     try {
-      BooleanBuilder builder = new BooleanBuilder();
-
-      if (status != null) {
-        builder.and(qProject.status.eq(status));
-      }
-      if (priority != null) {
-        builder.and(qProject.priority.eq(priority));
-      }
-      if (StringUtils.hasText(title)) {
-        builder.and(qProject.title.like("%" + title + "%"));
-      }
-      if (StringUtils.hasText(subTitle)) {
-        builder.and(qProject.subTitle.like("%" + subTitle + "%"));
-      }
-      if (creatorId != null && creatorId > 0) {
-        builder.and(qProject.creator.id.eq(creatorId));
-      }
-      if (assigneeId != null && !assigneeId.isEmpty()) {
-        builder.and(qProject.assignee.any().id.in(assigneeId));
-      }
-      if (DateUtil.isValidDateRange(createdDateFrom, createdDateTo)) {
-        builder.and(
-            qProject.createdDate.between(
-                createdDateFrom.atStartOfDay(), createdDateTo.atStartOfDay()));
-      }
-      if (DateUtil.isValidDateRange(updatedDateFrom, updatedDateTo)) {
-        builder.and(
-            qProject.updatedDate.between(
-                updatedDateFrom.atStartOfDay(), updatedDateTo.atStartOfDay()));
-      }
-      if (DateUtil.isValidDateRange(dueDateFrom, dueDateTo)) {
-        builder.and(qProject.dueDate.between(dueDateFrom.atStartOfDay(), dueDateTo.atStartOfDay()));
-      }
-      if (DateUtil.isValidDateRange(startDateFrom, startDateTo)) {
-        builder.and(
-            qProject.startDate.between(startDateFrom.atStartOfDay(), startDateTo.atStartOfDay()));
-      }
-      if (DateUtil.isValidDateRange(endDateFrom, endDateTo)) {
-        builder.and(qProject.endDate.between(endDateFrom.atStartOfDay(), endDateTo.atStartOfDay()));
-      }
-      if (tag != null && !tag.isEmpty()) {
-        builder.and(qProject.tag.any().in(tag));
-      }
-
-      return builder.hasValue()
-          ? queryFactory.selectFrom(qProject).where(builder).fetch()
-          : getProjects();
+      return queryFactory
+          .selectFrom(qProject)
+          .innerJoin(qProject.creator, qMember)
+          .innerJoin(qProject.subIssues, qIssue)
+          .fetchJoin()
+          .where(
+              status != null ? qProject.status.eq(status) : null,
+              priority != null ? qProject.priority.eq(priority) : null,
+              StringUtils.hasText(title) ? qProject.title.like("%" + title + "%") : null,
+              StringUtils.hasText(subTitle) ? qProject.subTitle.like("%" + subTitle + "%") : null,
+              creatorId != null && creatorId > 0 ? qProject.creator.id.eq(creatorId) : null,
+              assigneeId != null && !assigneeId.isEmpty()
+                  ? qProject.assignee.any().id.in(assigneeId)
+                  : null,
+              DateUtil.isValidDateRange(createdDateFrom, createdDateTo)
+                  ? qProject.createdDate.between(
+                      createdDateFrom.atStartOfDay(), createdDateTo.atStartOfDay())
+                  : null,
+              DateUtil.isValidDateRange(updatedDateFrom, updatedDateTo)
+                  ? qProject.updatedDate.between(
+                      updatedDateFrom.atStartOfDay(), updatedDateTo.atStartOfDay())
+                  : null,
+              DateUtil.isValidDateRange(dueDateFrom, dueDateTo)
+                  ? qProject.dueDate.between(dueDateFrom.atStartOfDay(), dueDateTo.atStartOfDay())
+                  : null,
+              DateUtil.isValidDateRange(startDateFrom, startDateTo)
+                  ? qProject.startDate.between(
+                      startDateFrom.atStartOfDay(), startDateTo.atStartOfDay())
+                  : null,
+              DateUtil.isValidDateRange(endDateFrom, endDateTo)
+                  ? qProject.endDate.between(endDateFrom.atStartOfDay(), endDateTo.atStartOfDay())
+                  : null,
+              tag != null && !tag.isEmpty() ? qProject.tag.any().in(tag) : null,
+              qIssue.parentIssue.isNull())
+          .orderBy(
+              qProject.createdDate.asc(), qProject.creator.name.asc(), qIssue.createdDate.asc())
+          .fetch();
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -119,7 +108,14 @@ public class ProjectService {
   }
 
   public Project getProjectsById(Long id) {
-    return projectRepository.findById(id).orElse(null);
+    return queryFactory
+        .selectFrom(qProject)
+        .innerJoin(qProject.creator, qMember)
+        .innerJoin(qProject.subIssues, qIssue)
+        .fetchJoin()
+        .where(qProject.id.eq(id).and(qIssue.parentIssue.isNull()))
+        .orderBy(qProject.creator.name.asc(), qIssue.createdDate.asc())
+        .fetchOne();
   }
 
   @Transactional
