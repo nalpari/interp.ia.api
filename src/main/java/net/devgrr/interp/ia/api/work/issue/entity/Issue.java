@@ -16,7 +16,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -78,13 +78,13 @@ public class Issue extends BaseEntity {
   private List<Member> assignee;
 
   @Schema(description = "기한일")
-  private LocalDateTime dueDate;
+  private LocalDate dueDate;
 
   @Schema(description = "시작일")
-  private LocalDateTime startDate;
+  private LocalDate startDate;
 
   @Schema(description = "종료일")
-  private LocalDateTime endDate;
+  private LocalDate endDate;
 
   @Column(columnDefinition = "TEXT")
   @Schema(description = "내용")

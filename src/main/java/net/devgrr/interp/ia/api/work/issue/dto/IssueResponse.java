@@ -2,6 +2,7 @@ package net.devgrr.interp.ia.api.work.issue.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
@@ -24,10 +25,9 @@ public record IssueResponse(
         LocalDateTime createdDate,
     @Schema(description = "수정일") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime updatedDate,
-    @Schema(description = "기한일") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime dueDate,
-    @Schema(description = "시작일") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime startDate,
-    @Schema(description = "종료일") @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate,
+    @Schema(description = "기한일") @JsonFormat(pattern = "yyyy-MM-dd") LocalDate dueDate,
+    @Schema(description = "시작일") @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+    @Schema(description = "종료일") @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
     @Schema(description = "내용") String description,
     @Schema(description = "태그") Set<String> tag,
     @Schema(description = "상위 프로젝트 ID") ProjectRefResponse parentProject,
