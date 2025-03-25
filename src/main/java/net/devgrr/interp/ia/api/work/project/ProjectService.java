@@ -67,7 +67,7 @@ public class ProjectService {
       return queryFactory
           .selectFrom(qProject)
           .innerJoin(qProject.creator, qMember)
-          .innerJoin(qProject.subIssues, qIssue)
+          .leftJoin(qProject.subIssues, qIssue)
           .fetchJoin()
           .where(
               status != null ? qProject.status.eq(status) : null,
@@ -111,7 +111,7 @@ public class ProjectService {
     return queryFactory
         .selectFrom(qProject)
         .innerJoin(qProject.creator, qMember)
-        .innerJoin(qProject.subIssues, qIssue)
+        .leftJoin(qProject.subIssues, qIssue)
         .fetchJoin()
         .where(qProject.id.eq(id).and(qIssue.parentIssue.isNull()))
         .orderBy(qProject.creator.name.asc(), qIssue.createdDate.asc())
