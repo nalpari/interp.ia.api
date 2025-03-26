@@ -67,6 +67,9 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     }
 
     // Access Token 재발급
+    // securityContext 에 refreshToken 가지고 있는 Member 정보 저장
+    // /refresh => User 이상 권한 필요함
+    saveAuthentication(member);
     jwtService.sendAccessToken(response, jwtService.createAccessToken(member.getEmail()));
   }
 

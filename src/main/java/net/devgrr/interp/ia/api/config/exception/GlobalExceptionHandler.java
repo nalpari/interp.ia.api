@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AuthenticationException.class)
   protected ResponseEntity<ErrorResponse> handle(AuthenticationException e) {
-    return ResponseEntity.badRequest().body(new ErrorResponse(ErrorCode.FORBIDDEN));
+    return ResponseEntity.status(403).body(new ErrorResponse(ErrorCode.FORBIDDEN, e.getMessage()));
   }
 
   @ExceptionHandler(ResponseStatusException.class)
@@ -64,20 +64,8 @@ public class GlobalExceptionHandler {
     }
   }
 
-  @ExceptionHandler(SignatureException.class)
-  public ResponseEntity<ErrorResponse> handle(SignatureException e) {
-    return ResponseEntity.status(401)
-        .body(new ErrorResponse(ErrorCode.UNAUTHORIZED, e.getMessage()));
-  }
-
   @ExceptionHandler(TokenExpiredException.class)
   public ResponseEntity<ErrorResponse> handle(TokenExpiredException e) {
-    return ResponseEntity.status(401)
-        .body(new ErrorResponse(ErrorCode.UNAUTHORIZED, e.getMessage()));
-  }
-
-  @ExceptionHandler(JWTDecodeException.class)
-  public ResponseEntity<ErrorResponse> handle(JWTDecodeException e) {
     return ResponseEntity.status(401)
         .body(new ErrorResponse(ErrorCode.UNAUTHORIZED, e.getMessage()));
   }
