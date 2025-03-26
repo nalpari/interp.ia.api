@@ -37,16 +37,14 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
       checkRefreshTokenAndReIssueAccessToken(request, response, filterChain);
     }
 
-    String accessToken = jwtService.extractAccessToken(request).orElse(null);
+    checkAccessTokenAndAuthentication(request, response);
 
-    if (accessToken != null) {
-      checkAccessTokenAndAuthentication(request, accessToken);
-    }
     filterChain.doFilter(request, response);
   }
 
   private void checkRefreshTokenAndReIssueAccessToken(
-          HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
     String refreshToken = jwtService.extractRefreshToken(request).orElse(null);
 
     if (refreshToken == null) {
@@ -78,16 +76,23 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
     request.setAttribute("exception", new AccessDeniedException(message));
   }
 
-
   private void checkAccessTokenAndAuthentication(
-      HttpServletRequest request,
-      String accessToken) {
-    if (jwtService.isTokenValid(request, accessToken)) {
-      jwtService
-          .extractUserId(accessToken)
-          .flatMap(memberRepository::findByEmail)
-          .ifPresent(this::saveAuthentication);
+      HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String accessToken = jwtService.extractAccessToken(request).orElse(null);
+    if (accessToken == null) {
+      // refreshToken == null : 401 error
+      setException(request, "token is null");
+      return;
     }
+    if (!jwtService.isTokenValid(request, accessToken)) {
+      return;
+    }
+
+    jwtService
+        .extractUserId(accessToken)
+        .flatMap(memberRepository::findByEmail)
+        .ifPresent(this::saveAuthentication);
   }
 
   private void saveAuthentication(Member member) {

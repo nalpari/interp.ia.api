@@ -1,10 +1,7 @@
 package net.devgrr.interp.ia.api.config.exception;
 
-import java.security.SignatureException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import java.util.stream.Collectors;
-
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -64,8 +61,8 @@ public class GlobalExceptionHandler {
     }
   }
 
-  @ExceptionHandler(TokenExpiredException.class)
-  public ResponseEntity<ErrorResponse> handle(TokenExpiredException e) {
+  @ExceptionHandler(JWTVerificationException.class)
+  public ResponseEntity<ErrorResponse> handle(JWTVerificationException e) {
     return ResponseEntity.status(401)
         .body(new ErrorResponse(ErrorCode.UNAUTHORIZED, e.getMessage()));
   }
