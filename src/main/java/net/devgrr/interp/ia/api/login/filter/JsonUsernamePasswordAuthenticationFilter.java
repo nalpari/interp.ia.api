@@ -37,7 +37,7 @@ public class JsonUsernamePasswordAuthenticationFilter
   @Override
   public Authentication attemptAuthentication(
       HttpServletRequest request, HttpServletResponse response)
-      throws AuthenticationException, IOException, ServletException {
+      throws AuthenticationException, IOException {
 
     if (!request.getContentType().equals(CONTENT_TYPE)) {
       throw new AuthenticationServiceException(

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.jwt.JwtService;
 import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.entity.Member;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
@@ -21,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
+  private static final String JWT_REQUEST_URL = "/refresh";
 
   private final JwtService jwtService;
   private final MemberRepository memberRepository;
@@ -31,41 +33,58 @@ public class JwtAuthenticationProcessingFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    // RefreshToken 존재 -> 유효하면 AccessToken 재발급
-    String refreshToken =
-        jwtService.extractRefreshToken(request).filter(jwtService::isTokenValid).orElse(null);
-    if (refreshToken != null) {
-      checkRefreshTokenAndReIssueAccessToken(response, refreshToken);
-      return;
+    if (request.getRequestURI().equals(JWT_REQUEST_URL)) {
+      checkRefreshTokenAndReIssueAccessToken(request, response, filterChain);
     }
 
-    // AccessToken 만 존재 -> AccessToken 검사 후 유저정보 저장, 필터 계속 진행
-    checkAccessTokenAndAuthentication(request, response, filterChain);
+    String accessToken = jwtService.extractAccessToken(request).orElse(null);
+
+    if (accessToken != null) {
+      checkAccessTokenAndAuthentication(request, accessToken);
+    }
+    filterChain.doFilter(request, response);
   }
 
   private void checkRefreshTokenAndReIssueAccessToken(
-      HttpServletResponse response, String refreshToken) {
+          HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    String refreshToken = jwtService.extractRefreshToken(request).orElse(null);
 
-    memberRepository
-        .findByRefreshToken(refreshToken)
-        .ifPresent(
-            member ->
-                jwtService.sendAccessToken(
-                    response, jwtService.createAccessToken(member.getEmail())));
+    if (refreshToken == null) {
+      // refreshToken == null : 401 error
+      setException(request, "token is null");
+      return;
+    }
+
+    if (!jwtService.isTokenValid(request, refreshToken)) {
+      return;
+    }
+
+    Member member = memberRepository.findByRefreshToken(refreshToken).orElse(null);
+    if (member == null) {
+      // RefreshToken 이 저장된 Member 없음 : 401 error
+      setException(request, "cannot find member by Refresh Token");
+      return;
+    }
+
+    // Access Token 재발급
+    jwtService.sendAccessToken(response, jwtService.createAccessToken(member.getEmail()));
   }
 
-  private void checkAccessTokenAndAuthentication(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
-    jwtService
-        .extractAccessToken(request)
-        .filter(jwtService::isTokenValid)
-        .flatMap(
-            accessToken ->
-                jwtService.extractUserId(accessToken).flatMap(memberRepository::findByEmail))
-        .ifPresent(this::saveAuthentication);
+  private void setException(HttpServletRequest request, String message) {
+    // exception handling
+    request.setAttribute("exception", new AccessDeniedException(message));
+  }
 
-    filterChain.doFilter(request, response);
+
+  private void checkAccessTokenAndAuthentication(
+      HttpServletRequest request,
+      String accessToken) {
+    if (jwtService.isTokenValid(request, accessToken)) {
+      jwtService
+          .extractUserId(accessToken)
+          .flatMap(memberRepository::findByEmail)
+          .ifPresent(this::saveAuthentication);
+    }
   }
 
   private void saveAuthentication(Member member) {
