@@ -16,4 +16,11 @@ public class JwtController {
     @PostMapping("/refresh")
     @ResponseStatus(HttpStatus.OK)
     public void getNewAccessToken() {}
+
+    @Operation(description = "/admin 엔드포인트 테스트 컨트롤러")
+    @GetMapping("/admin")
+    @ResponseStatus(HttpStatus.OK)
+    public String getAdmin() {
+        return "admin";
+    }
 }
