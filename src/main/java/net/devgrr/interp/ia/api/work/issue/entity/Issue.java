@@ -14,8 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -112,7 +112,7 @@ public class Issue extends BaseEntity {
   @Schema(description = "상위 이슈")
   private Issue parentIssue;
 
-  @OneToMany
+  @Transient
   @Schema(description = "하위 이슈")
   private Set<Issue> subIssues;
 

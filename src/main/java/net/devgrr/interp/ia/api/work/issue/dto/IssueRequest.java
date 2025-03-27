@@ -62,8 +62,6 @@ public record IssueRequest(
     @Schema(description = "상위 이슈 ID")
         @JsonView({IssueValidationGroup.postGroup.class, IssueValidationGroup.putGroup.class})
         Long parentIssueId,
-    @Schema(description = "하위 이슈 ID") @JsonView(IssueValidationGroup.putGroup.class)
-        Set<Long> subIssuesId,
     @Schema(description = "연관 이슈 ID")
         @JsonView({IssueValidationGroup.postGroup.class, IssueValidationGroup.putGroup.class})
         Set<Long> relatedIssuesId) {}

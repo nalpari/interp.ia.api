@@ -37,8 +37,13 @@ public interface IssueMapper {
 
   IssueResponse toResponse(Issue issue);
 
+  @Mapping(target = "subIssues", source = "subIssues")
+  void mapSubIssues(@MappingTarget Issue issue, Integer dummy, List<Issue> subIssues);
+
+  @Mapping(target = "subIssues", source = "subIssues")
   @Mapping(target = "relatedIssues", source = "relatedIssue")
-  Issue mapRelatedIssues(Issue issue, List<Issue> relatedIssue);
+  Issue mapInvolvedIssues(
+      @MappingTarget Issue issue, List<Issue> subIssues, List<Issue> relatedIssue);
 
   @Mapping(target = "creator", source = "creator")
   @Mapping(target = "assignee", source = "assignee")
