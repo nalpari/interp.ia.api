@@ -2,7 +2,6 @@ package net.devgrr.interp.ia.api.work.project;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
@@ -87,14 +87,13 @@ public class ProjectService {
                       updatedDateFrom.atStartOfDay(), updatedDateTo.atStartOfDay())
                   : null,
               DateUtil.isValidDateRange(dueDateFrom, dueDateTo)
-                  ? qProject.dueDate.between(dueDateFrom.atStartOfDay(), dueDateTo.atStartOfDay())
+                  ? qProject.dueDate.between(dueDateFrom, dueDateTo)
                   : null,
               DateUtil.isValidDateRange(startDateFrom, startDateTo)
-                  ? qProject.startDate.between(
-                      startDateFrom.atStartOfDay(), startDateTo.atStartOfDay())
+                  ? qProject.startDate.between(startDateFrom, startDateTo)
                   : null,
               DateUtil.isValidDateRange(endDateFrom, endDateTo)
-                  ? qProject.endDate.between(endDateFrom.atStartOfDay(), endDateTo.atStartOfDay())
+                  ? qProject.endDate.between(endDateFrom, endDateTo)
                   : null,
               tag != null && !tag.isEmpty() ? qProject.tag.any().in(tag) : null,
               qIssue.parentIssue.isNull())
@@ -145,35 +144,31 @@ public class ProjectService {
       String key = req.keySet().iterator().next();
       Object value = req.values().iterator().next();
       Member modifier = memberService.getUsersByEmail(userDetails.getUsername());
+      String beforeValue = null;
+      String afterValue = null;
 
       switch (key) {
         case "status":
           IssueStatus newStatus = IssueStatus.valueOf(value.toString());
-          historyService.setHistory(
-              id,
-              Objects.toString(originProject.getStatus(), null),
-              newStatus.toString(),
-              key,
-              modifier);
+          beforeValue = Objects.toString(originProject.getStatus(), null);
+          afterValue = newStatus.toString();
           projectRepository.save(projectMapper.putProjectStatus(originProject, 0, newStatus));
           break;
         case "priority":
           Priority newPriority = Priority.valueOf(value.toString());
-          historyService.setHistory(
-              id,
-              Objects.toString(originProject.getPriority(), null),
-              newPriority.toString(),
-              key,
-              modifier);
+          beforeValue = Objects.toString(originProject.getPriority(), null);
+          afterValue = newPriority.toString();
           projectRepository.save(projectMapper.putProjectPriority(originProject, 0, newPriority));
           break;
         case "title":
-          historyService.setHistory(id, originProject.getTitle(), value.toString(), key, modifier);
+          beforeValue = originProject.getTitle();
+          afterValue = value.toString();
           projectRepository.save(projectMapper.putProjectTitle(originProject, 0, value.toString()));
           break;
         case "subTitle":
           String newSubTitle = Objects.toString(value, null);
-          historyService.setHistory(id, originProject.getSubTitle(), newSubTitle, key, modifier);
+          beforeValue = originProject.getSubTitle();
+          afterValue = newSubTitle;
           projectRepository.save(projectMapper.putProjectSubTitle(originProject, 0, newSubTitle));
           break;
         case "assigneeId":
@@ -185,14 +180,11 @@ public class ProjectService {
               value != null
                   ? memberService.getUsersByIds(new HashSet<>((List<Integer>) value))
                   : null;
-          historyService.setHistory(
-              id,
-              originAssignee,
+          beforeValue = originAssignee;
+          afterValue =
               newAssignee != null
                   ? newAssignee.stream().map(Member::getId).toList().toString()
-                  : null,
-              key,
-              modifier);
+                  : null;
           projectRepository.save(projectMapper.putProjectAssignee(originProject, 0, newAssignee));
           break;
         case "dueDate":
@@ -204,42 +196,41 @@ public class ProjectService {
                   : key.equals("startDate")
                       ? Objects.toString(originProject.getStartDate(), null)
                       : Objects.toString(originProject.getEndDate(), null);
-          LocalDateTime newDate =
+          LocalDate newDate =
               value != null
                   ? LocalDate.parse(value.toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                      .atStartOfDay()
                   : null;
-          historyService.setHistory(
-              id, originDate, newDate != null ? newDate.toString() : null, key, modifier);
+          beforeValue = originDate;
+          afterValue = newDate != null ? newDate.toString() : null;
           projectRepository.save(updateProjectDateField(originProject, key, newDate));
           break;
         case "description":
           String newDescription = Objects.toString(value, null);
-          historyService.setHistory(
-              id, originProject.getDescription(), newDescription, key, modifier);
+          beforeValue = originProject.getDescription();
+          afterValue = newDescription;
           projectRepository.save(
               projectMapper.putProjectDescription(originProject, 0, newDescription));
           break;
         case "tag":
           Set<String> newTag = value != null ? new HashSet<>((List<String>) value) : null;
-          historyService.setHistory(
-              id,
-              !originProject.getTag().isEmpty() ? originProject.getTag().toString() : null,
-              Objects.toString(newTag, null),
-              key,
-              modifier);
+          beforeValue =
+              !originProject.getTag().isEmpty() ? originProject.getTag().toString() : null;
+          afterValue = Objects.toString(newTag, null);
           projectRepository.save(projectMapper.putProjectTag(originProject, 0, newTag));
           break;
         default:
           throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
       }
 
+      historyService.setHistory(
+          IssueCategory.PROJECT.getValue(), id, beforeValue, afterValue, key, modifier);
+
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
-  private Project updateProjectDateField(Project project, String key, LocalDateTime date)
+  private Project updateProjectDateField(Project project, String key, LocalDate date)
       throws BaseException {
     return switch (key) {
       case "dueDate" -> projectMapper.putProjectDueDate(project, 0, date);

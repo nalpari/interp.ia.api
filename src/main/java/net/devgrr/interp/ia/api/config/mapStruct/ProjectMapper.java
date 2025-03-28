@@ -1,6 +1,6 @@
 package net.devgrr.interp.ia.api.config.mapStruct;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Set;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.Priority;
@@ -59,14 +59,13 @@ public interface ProjectMapper {
   Project putProjectSubTitle(@MappingTarget Project project, Integer dummy, String subTitle);
 
   @Mapping(target = "dueDate", source = "dueDate")
-  Project putProjectDueDate(@MappingTarget Project project, Integer dummy, LocalDateTime dueDate);
+  Project putProjectDueDate(@MappingTarget Project project, Integer dummy, LocalDate dueDate);
 
   @Mapping(target = "startDate", source = "startDate")
-  Project putProjectStartDate(
-      @MappingTarget Project project, Integer dummy, LocalDateTime startDate);
+  Project putProjectStartDate(@MappingTarget Project project, Integer dummy, LocalDate startDate);
 
   @Mapping(target = "endDate", source = "endDate")
-  Project putProjectEndDate(@MappingTarget Project project, Integer dummy, LocalDateTime endDate);
+  Project putProjectEndDate(@MappingTarget Project project, Integer dummy, LocalDate endDate);
 
   @Mapping(target = "description", source = "description")
   Project putProjectDescription(@MappingTarget Project project, Integer dummy, String description);
