@@ -16,6 +16,7 @@ import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
+import net.devgrr.interp.ia.api.config.swagger.annotation.SwaggerBody;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectValidationGroup;
@@ -148,13 +149,6 @@ public class ProjectController {
     return projectMapper.toResponse(projectService.setProjects(req, userDetails.getUsername()));
   }
 
-  /**
-   * TODO
-   *
-   * <p>- 하위 이슈 처리 추가
-   *
-   * <p>- 수정 권한 처리 추가
-   */
   @Operation(
       description =
           """
@@ -173,18 +167,16 @@ public class ProjectController {
           - endDate (종료일) - String (format: yyyy-MM-dd)
           - description (내용) - String
           - tag (태그) - List<String>
-          - (TODO) subIssuesId (하위 이슈 ID) - List<Integer>
-          """,
-      requestBody =
-          @io.swagger.v3.oas.annotations.parameters.RequestBody(
-              content =
-                  @Content(
-                      mediaType = "application/json",
-                      examples = {
-                        @ExampleObject(name = "제목 수정 요청", value = "{\"title\": \"제목 수정\"}"),
-                        @ExampleObject(name = "담당자 수정 요청", value = "{\"assigneeId\": [1, 2]}"),
-                        @ExampleObject(name = "기한일 수정 요청", value = "{\"dueDate\": \"2025-01-01\"}")
-                      })))
+          """)
+  @SwaggerBody(
+      content =
+          @Content(
+              mediaType = "application/json",
+              examples = {
+                @ExampleObject(name = "제목 수정 요청", value = "{\"title\": \"제목 수정\"}"),
+                @ExampleObject(name = "담당자 수정 요청", value = "{\"assigneeId\": [1, 2]}"),
+                @ExampleObject(name = "기한일 수정 요청", value = "{\"dueDate\": \"2025-01-01\"}")
+              }))
   @PatchMapping("/{id}")
   public void putProjectsById(
       @PathVariable("id") @Parameter(description = "프로젝트 ID") Long id,
