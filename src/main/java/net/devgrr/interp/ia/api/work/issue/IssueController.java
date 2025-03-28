@@ -64,24 +64,24 @@ public class IssueController {
           """)
   @GetMapping("/search")
   public List<IssueResponse> getIssuesByKeywords(
-      @RequestParam(value = "parentProjectId", required = false)
-          @Parameter(description = "상위 프로젝트 ID")
-          Long parentProjectId,
+      @RequestParam(value = "projectId", required = false) @Parameter(description = "상위 프로젝트 ID")
+          List<Long> projectId,
       @RequestParam(value = "parentIssueId", required = false) @Parameter(description = "상위 이슈 ID")
-          Long parentIssueId,
+          List<Long> parentIssueId,
       @RequestParam(value = "issueId", required = false) @Parameter(description = "이슈 ID")
-          Long issueId,
-      @RequestParam(value = "type", required = false) @Parameter(description = "유형") IssueType type,
+          List<Long> issueId,
+      @RequestParam(value = "type", required = false) @Parameter(description = "유형")
+          List<IssueType> type,
       @RequestParam(value = "status", required = false) @Parameter(description = "상태")
-          IssueStatus status,
+          List<IssueStatus> status,
       @RequestParam(value = "priority", required = false) @Parameter(description = "중요도")
-          Priority priority,
+          List<Priority> priority,
       @RequestParam(value = "title", required = false) @Parameter(description = "이슈 제목")
           String title,
       @RequestParam(value = "subTitle", required = false) @Parameter(description = "이슈 부제목")
           String subTitle,
       @RequestParam(value = "creatorId", required = false) @Parameter(description = "생성자 ID")
-          Long creatorId,
+          List<Long> creatorId,
       @RequestParam(value = "assigneeId", required = false) @Parameter(description = "담당자 ID")
           List<Long> assigneeId,
       @RequestParam(value = "createdDateFrom", required = false)
@@ -128,7 +128,7 @@ public class IssueController {
       throws BaseException {
     return issueService
         .getIssuesByKeywords(
-            parentProjectId,
+            projectId,
             parentIssueId,
             issueId,
             type,

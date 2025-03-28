@@ -74,15 +74,15 @@ public class IssueService {
   }
 
   public List<Issue> getIssuesByKeywords(
-      Long parentProjectId,
-      Long parentIssueId,
-      Long issueId,
-      IssueType type,
-      IssueStatus status,
-      Priority priority,
+      List<Long> projectId,
+      List<Long> parentIssueId,
+      List<Long> issueId,
+      List<IssueType> type,
+      List<IssueStatus> status,
+      List<Priority> priority,
       String title,
       String subTitle,
-      Long creatorId,
+      List<Long> creatorId,
       List<Long> assigneeId,
       LocalDate createdDateFrom,
       LocalDate createdDateTo,
@@ -104,19 +104,19 @@ public class IssueService {
           .leftJoin(qIssue.assignee, qAssignee)
           .fetchJoin()
           .where(
-              parentProjectId != null && parentProjectId > 0
-                  ? qIssue.parentProject.id.eq(parentProjectId)
+              projectId != null && !projectId.isEmpty()
+                  ? qIssue.parentProject.id.in(projectId)
                   : null,
-              parentIssueId != null && parentIssueId > 0
-                  ? qIssue.parentIssue.id.eq(parentIssueId)
+              parentIssueId != null && !parentIssueId.isEmpty()
+                  ? qIssue.parentIssue.id.in(parentIssueId)
                   : null,
-              issueId != null && issueId > 0 ? qIssue.id.eq(issueId) : null,
-              type != null ? qIssue.type.eq(type) : null,
-              status != null ? qIssue.status.eq(status) : null,
-              priority != null ? qIssue.priority.eq(priority) : null,
+              issueId != null && !issueId.isEmpty() ? qIssue.id.in(issueId) : null,
+              type != null && !type.isEmpty() ? qIssue.type.in(type) : null,
+              status != null && !status.isEmpty() ? qIssue.status.in(status) : null,
+              priority != null && !priority.isEmpty() ? qIssue.priority.in(priority) : null,
               StringUtils.hasText(title) ? qIssue.title.contains(title) : null,
               StringUtils.hasText(subTitle) ? qIssue.subTitle.contains(subTitle) : null,
-              creatorId != null && creatorId > 0 ? qIssue.creator.id.eq(creatorId) : null,
+              creatorId != null && !creatorId.isEmpty() ? qIssue.creator.id.in(creatorId) : null,
               assigneeId != null && !assigneeId.isEmpty()
                   ? qIssue.assignee.any().id.in(assigneeId)
                   : null,
