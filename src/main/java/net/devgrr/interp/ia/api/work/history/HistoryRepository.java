@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HistoryRepository extends JpaRepository<History, Long> {
 
-  List<History> findAllByIssueId(Long issueId);
+  List<History> findAllByCategoryAndIssueId(String category, Long issueId);
 }
