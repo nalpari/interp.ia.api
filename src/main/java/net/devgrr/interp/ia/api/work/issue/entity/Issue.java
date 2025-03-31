@@ -1,7 +1,9 @@
 package net.devgrr.interp.ia.api.work.issue.entity;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,9 +14,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import jakarta.persistence.Transient;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -25,7 +27,9 @@ import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.IssueType;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.member.entity.Member;
+import net.devgrr.interp.ia.api.model.entity.BaseEntity;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Getter
 @Setter
@@ -34,7 +38,8 @@ import net.devgrr.interp.ia.api.work.project.entity.Project;
 @Table(name = "issue")
 @Schema(description = "이슈 엔티티")
 @AllArgsConstructor
-public class Issue {
+@DynamicUpdate
+public class Issue extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Schema(description = "고유 ID")
@@ -73,20 +78,23 @@ public class Issue {
   private List<Member> assignee;
 
   @Schema(description = "기한일")
-  private LocalDateTime dueDate;
+  private LocalDate dueDate;
 
   @Schema(description = "시작일")
-  private LocalDateTime startDate;
+  private LocalDate startDate;
 
   @Schema(description = "종료일")
-  private LocalDateTime endDate;
+  private LocalDate endDate;
 
   @Column(columnDefinition = "TEXT")
   @Schema(description = "내용")
   private String description;
 
+  @ElementCollection
+  @CollectionTable(name = "issue_tags", joinColumns = @JoinColumn(name = "issue_id"))
+  @Column(name = "tag")
   @Schema(description = "태그")
-  private String tag;
+  private Set<String> tag;
 
   /*
    * TODO: 댓글 추가
@@ -94,12 +102,6 @@ public class Issue {
   //  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
   //  @Schema(description = "댓글")
   //  private List<IssueComment> comments;
-
-  /*
-   * TODO: 변경이력 추가
-   * */
-  //  @Schema(description = "변경이력")
-  //  private List<History> history;
 
   @ManyToOne
   @JoinColumn(name = "parent_project_id", nullable = false)
@@ -110,11 +112,11 @@ public class Issue {
   @Schema(description = "상위 이슈")
   private Issue parentIssue;
 
-  @OneToMany
+  @Transient
   @Schema(description = "하위 이슈")
   private Set<Issue> subIssues;
 
-  @OneToMany
+  @ManyToMany
   @Schema(description = "연관 이슈")
   private Set<Issue> relatedIssues;
 

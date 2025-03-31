@@ -36,6 +36,10 @@ public class History {
   private Long id;
 
   @Column(nullable = false)
+  @Schema(description = "카테고리 (ex. project, issue)")
+  private String category;
+
+  @Column(nullable = false)
   @Schema(description = "이슈 ID")
   private Long issueId;
 

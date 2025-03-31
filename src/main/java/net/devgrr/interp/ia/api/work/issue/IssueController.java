@@ -1,4 +1,4 @@
-package net.devgrr.interp.ia.api.work.project;
+package net.devgrr.interp.ia.api.work.issue;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,16 +14,18 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
+import net.devgrr.interp.ia.api.config.issue.IssueType;
 import net.devgrr.interp.ia.api.config.issue.Priority;
-import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
+import net.devgrr.interp.ia.api.config.mapStruct.IssueMapper;
 import net.devgrr.interp.ia.api.config.swagger.annotation.SwaggerBody;
-import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
-import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
-import net.devgrr.interp.ia.api.work.project.dto.ProjectValidationGroup;
+import net.devgrr.interp.ia.api.work.issue.dto.IssueRequest;
+import net.devgrr.interp.ia.api.work.issue.dto.IssueResponse;
+import net.devgrr.interp.ia.api.work.issue.dto.IssueValidationGroup;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -35,32 +37,52 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequestMapping("/api/projects")
+@RequestMapping("/api/issues")
 @RequiredArgsConstructor
-@Tag(name = "ProjectController", description = "프로젝트 API")
+@Tag(name = "IssueController", description = "이슈 API")
 @RestController
-public class ProjectController {
+public class IssueController {
 
-  private final ProjectService projectService;
-  private final ProjectMapper projectMapper;
+  private final IssueService issueService;
+  private final IssueMapper issueMapper;
+
+  @Operation(description = "이슈 목록을 조회한다.")
+  @GetMapping
+  public List<IssueResponse> getIssues(
+      @RequestParam(value = "projectId", required = false) @Parameter(description = "프로젝트 ID")
+          Long projectId,
+      @RequestParam(value = "issueId", required = false) @Parameter(description = "이슈 ID")
+          Long issueId)
+      throws BaseException {
+    return issueService.getIssues(projectId, issueId).stream()
+        .map(issueMapper::toResponse)
+        .collect(Collectors.toList());
+  }
 
   @Operation(
       description =
           """
-          프로젝트 목록을 조회한다. \n
+          이슈를 검색한다. \n
           검색 조건은 전부 선택 사항이며, 조건이 여러 개 있을 경우 AND 조건으로 검색한다. <br>
-          검색 조건이 없을 경우 전체 목록을 조회한다.
-          프로젝트의 하위 이슈는 최상위 이슈만 조회한다.
+          검색 조건이 없을 경우 전체 목록을 조회한다. <br>
+          하위 이슈는 검색되지 않는다. (이슈 단건 조회 이용)
           """)
-  @GetMapping
-  public List<ProjectResponse> getProjects(
+  @GetMapping("/search")
+  public List<IssueResponse> getIssuesByKeywords(
+      @RequestParam(value = "projectId", required = false) @Parameter(description = "상위 프로젝트 ID")
+          Long projectId,
+      @RequestParam(value = "parentIssueId", required = false) @Parameter(description = "상위 이슈 ID")
+          Long parentIssueId,
+      @RequestParam(value = "issueId", required = false) @Parameter(description = "이슈 ID")
+          Long issueId,
+      @RequestParam(value = "type", required = false) @Parameter(description = "유형") IssueType type,
       @RequestParam(value = "status", required = false) @Parameter(description = "상태")
           IssueStatus status,
       @RequestParam(value = "priority", required = false) @Parameter(description = "중요도")
           Priority priority,
-      @RequestParam(value = "title", required = false) @Parameter(description = "프로젝트 제목")
+      @RequestParam(value = "title", required = false) @Parameter(description = "이슈 제목")
           String title,
-      @RequestParam(value = "subTitle", required = false) @Parameter(description = "프로젝트 부제목")
+      @RequestParam(value = "subTitle", required = false) @Parameter(description = "이슈 부제목")
           String subTitle,
       @RequestParam(value = "creatorId", required = false) @Parameter(description = "생성자 ID")
           Long creatorId,
@@ -108,8 +130,12 @@ public class ProjectController {
           LocalDate endDateTo,
       @RequestParam(value = "tag", required = false) @Parameter(description = "태그") Set<String> tag)
       throws BaseException {
-    return projectService
-        .getProjectsByKeywords(
+    return issueService
+        .getIssuesByKeywords(
+            projectId,
+            parentIssueId,
+            issueId,
+            type,
             status,
             priority,
             title,
@@ -128,37 +154,40 @@ public class ProjectController {
             endDateTo,
             tag)
         .stream()
-        .map(projectMapper::toResponse)
+        .map(issueMapper::toResponse)
         .collect(Collectors.toList());
   }
 
-  @Operation(description = "프로젝트를 조회한다. 프로젝트의 하위 이슈는 최상위 이슈만 조회한다.")
+  @Operation(description = "이슈를 조회한다.")
   @GetMapping("/{id}")
-  public ProjectResponse getProjectsById(
-      @PathVariable("id") @Parameter(description = "프로젝트 ID") Long id) {
-    return projectMapper.toResponse(projectService.getProjectsById(id));
+  public IssueResponse getIssuesById(@PathVariable("id") @Parameter(description = "이슈 ID") Long id)
+      throws BaseException {
+    return issueMapper.toResponse(issueService.getIssueWithRelatedById(id));
   }
 
-  @Operation(description = "프로젝트를 등록한다.")
-  @JsonView(ProjectValidationGroup.postGroup.class)
+  @Operation(description = "이슈를 등록한다.")
+  @JsonView(IssueValidationGroup.postGroup.class)
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ProjectResponse setProjects(
-      @RequestBody ProjectRequest req, @AuthenticationPrincipal UserDetails userDetails)
+  public IssueResponse setIssues(
+      @Validated(IssueValidationGroup.postGroup.class) @RequestBody IssueRequest req,
+      @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
-    return projectMapper.toResponse(projectService.setProjects(req, userDetails.getUsername()));
+    return issueMapper.toResponse(issueService.setIssues(req, userDetails.getUsername()));
   }
 
   @Operation(
       description =
           """
-          프로젝트 정보를 수정한다.
+          이슈 정보를 수정한다.
 
           수정할 필드명은 key, 수정 데이터는 value의 JSON 형태로 입력한다.
+          (단, 상/하위 관계는 직접 수정 불가)
 
           key 목록 및 value 타입
           - title (제목) - String
           - subTitle (부제목) - String
+          - type (유형) - String
           - status (상태) - String
           - priority (중요도) - String
           - assigneeId (담당자 ID) - List<Integer>
@@ -167,6 +196,7 @@ public class ProjectController {
           - endDate (종료일) - String (format: yyyy-MM-dd)
           - description (내용) - String
           - tag (태그) - List<String>
+          - relatedIssuesId (연관 이슈 ID) - List<Integer>
           """)
   @SwaggerBody(
       content =
@@ -178,28 +208,19 @@ public class ProjectController {
                 @ExampleObject(name = "기한일 수정 요청", value = "{\"dueDate\": \"2025-01-01\"}")
               }))
   @PatchMapping("/{id}")
-  public void putProjectsById(
-      @PathVariable("id") @Parameter(description = "프로젝트 ID") Long id,
+  public void putIssuesById(
+      @PathVariable("id") @Parameter(description = "이슈 ID") Long id,
       @RequestBody Map<String, Object> req,
       @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
-    projectService.putProjectsById(id, req, userDetails);
+    issueService.putIssuesById(id, req, userDetails);
   }
 
-  /**
-   * TODO
-   *
-   * <p>- 삭제 정책 필요(삭제 플래그를 활용할 것인지)
-   *
-   * <p>- 삭제 시 연관된 데이터(issue, history) 삭제 여부
-   *
-   * <p>- 삭제 권한 처리 추가
-   */
-  @Operation(description = "프로젝트를 삭제한다.")
+  @Operation(description = "이슈를 삭제한다.")
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delProjectsById(@PathVariable("id") @Parameter(description = "프로젝트 ID") Long id)
+  public void deleteIssuesById(@PathVariable("id") @Parameter(description = "이슈 ID") Long id)
       throws BaseException {
-    projectService.delProjectsById(id);
+    issueService.deleteIssuesById(id);
   }
 }
