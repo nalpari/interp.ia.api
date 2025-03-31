@@ -163,7 +163,7 @@ public class ProjectService {
         case "title":
           beforeValue = originProject.getTitle();
           afterValue = value.toString();
-          projectRepository.save(projectMapper.putProjectTitle(originProject, 0, value.toString()));
+          projectRepository.save(projectMapper.putProjectTitle(originProject, value.toString()));
           break;
         case "subTitle":
           String newSubTitle = Objects.toString(value, null);
