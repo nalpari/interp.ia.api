@@ -9,11 +9,14 @@ import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.devgrr.interp.ia.api.config.exception.BaseException;
+import net.devgrr.interp.ia.api.config.exception.ErrorCode;
 import net.devgrr.interp.ia.api.config.mapStruct.MemberMapper;
 import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,12 +131,12 @@ public class JwtService {
     response.setHeader(refreshHeader, refreshToken);
   }
 
-  public boolean isTokenValid(String token) {
+  public boolean isTokenValid(HttpServletRequest request, String token) {
     try {
       JWT.require(Algorithm.HMAC512(secret)).build().verify(token);
       return true;
     } catch (Exception e) {
-      System.out.println("[ERROR] Invalid Token : " + e.getMessage());
+      request.setAttribute("exception", e);
       return false;
     }
   }

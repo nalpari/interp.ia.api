@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.jwt.JwtService;
+import net.devgrr.interp.ia.api.jwt.exceptionHandler.JwtAuthenticationEntryPoint;
 import net.devgrr.interp.ia.api.jwt.filter.JwtAuthenticationProcessingFilter;
 import net.devgrr.interp.ia.api.login.LoginService;
 import net.devgrr.interp.ia.api.login.filter.JsonUsernamePasswordAuthenticationFilter;
@@ -38,6 +39,8 @@ public class SecurityConfig {
   private final JwtService jwtService;
   private final ApiLoggingFilter apiLoggingFilter;
 
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
   @Bean
   SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
     httpSecurity
@@ -61,7 +64,7 @@ public class SecurityConfig {
                         new AntPathRequestMatcher("/login"),
                         new AntPathRequestMatcher("/api/users/signup"),
                         new AntPathRequestMatcher("/error"))
-                    .permitAll()
+                        .permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/admin"))
                     .hasRole("ADMIN")
                     .anyRequest()
@@ -69,7 +72,11 @@ public class SecurityConfig {
         .addFilterBefore(apiLoggingFilter, LogoutFilter.class)
         .addFilterBefore(jwtAuthenticationProcessingFilter(), LogoutFilter.class)
         .addFilterBefore(
-            jsonUsernamePasswordLoginFilter(), UsernamePasswordAuthenticationFilter.class);
+            jsonUsernamePasswordLoginFilter(), UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(
+            exceptionHandler -> {
+              exceptionHandler.authenticationEntryPoint(jwtAuthenticationEntryPoint);
+            });
 
     return httpSecurity.build();
   }

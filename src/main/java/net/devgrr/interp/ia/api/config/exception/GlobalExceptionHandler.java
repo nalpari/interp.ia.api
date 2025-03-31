@@ -1,8 +1,10 @@
 package net.devgrr.interp.ia.api.config.exception;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -45,7 +47,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(AuthenticationException.class)
   protected ResponseEntity<ErrorResponse> handle(AuthenticationException e) {
-    return ResponseEntity.badRequest().body(new ErrorResponse(ErrorCode.FORBIDDEN));
+    return ResponseEntity.status(403).body(new ErrorResponse(ErrorCode.FORBIDDEN, e.getMessage()));
   }
 
   @ExceptionHandler(ResponseStatusException.class)
@@ -57,5 +59,17 @@ public class GlobalExceptionHandler {
       return ResponseEntity.internalServerError()
           .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
     }
+  }
+
+  @ExceptionHandler(JWTVerificationException.class)
+  public ResponseEntity<ErrorResponse> handle(JWTVerificationException e) {
+    return ResponseEntity.status(401)
+        .body(new ErrorResponse(ErrorCode.UNAUTHORIZED, e.getMessage()));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handle(AccessDeniedException e) {
+    return ResponseEntity.status(401)
+        .body(new ErrorResponse(ErrorCode.UNAUTHORIZED, e.getMessage()));
   }
 }
