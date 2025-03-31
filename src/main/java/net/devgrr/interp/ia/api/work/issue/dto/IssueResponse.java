@@ -1,4 +1,4 @@
-package net.devgrr.interp.ia.api.work.project.dto;
+package net.devgrr.interp.ia.api.work.issue.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,14 +9,14 @@ import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.IssueType;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.member.dto.MemberResponse;
-import net.devgrr.interp.ia.api.work.issue.dto.IssueRefResponse;
+import net.devgrr.interp.ia.api.work.project.dto.ProjectRefResponse;
 
-@Schema(description = "프로젝트 응답 객체")
-public record ProjectResponse(
-    @Schema(description = "프로젝트 ID") Long id,
+@Schema(description = "이슈 응답 객체")
+public record IssueResponse(
+    @Schema(description = "이슈 ID") Long id,
     @Schema(description = "제목") String title,
     @Schema(description = "부제목") String subTitle,
-    @Schema(description = "유형") IssueType type, // IssueType.PROJECT 고정, 수정 불가
+    @Schema(description = "유형") IssueType type,
     @Schema(description = "상태") IssueStatus status,
     @Schema(description = "중요도") Priority priority,
     @Schema(description = "생성자") MemberResponse creator,
@@ -30,4 +30,7 @@ public record ProjectResponse(
     @Schema(description = "종료일") @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
     @Schema(description = "내용") String description,
     @Schema(description = "태그") Set<String> tag,
-    @Schema(description = "하위 이슈") Set<IssueRefResponse> subIssues) {}
+    @Schema(description = "상위 프로젝트 ID") ProjectRefResponse parentProject,
+    @Schema(description = "상위 이슈 ID") ProjectRefResponse parentIssue,
+    @Schema(description = "하위 이슈") Set<IssueRefResponse> subIssues,
+    @Schema(description = "연관 이슈") Set<IssueRefResponse> relatedIssues) {}

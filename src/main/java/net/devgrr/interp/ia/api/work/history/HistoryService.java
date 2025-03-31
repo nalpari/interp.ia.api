@@ -15,17 +15,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class HistoryService {
   private final HistoryRepository historyRepository;
 
-  public List<History> getHistoryByIssueId(Long issueId) {
-    return historyRepository.findAllByIssueId(issueId);
+  public List<History> getHistoryByCategoryAndIssueId(String category, Long issueId) {
+    return historyRepository.findAllByCategoryAndIssueId(category, issueId);
   }
 
   @Transactional
   public void setHistory(
-      Long issueId, String beforeValue, String afterValue, String fieldName, Member modifier)
+      String category,
+      Long issueId,
+      String beforeValue,
+      String afterValue,
+      String fieldName,
+      Member modifier)
       throws BaseException {
     try {
       historyRepository.save(
           History.builder()
+              .category(category)
               .issueId(issueId)
               .beforeValue(beforeValue)
               .afterValue(afterValue)

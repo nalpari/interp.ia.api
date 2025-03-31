@@ -23,10 +23,12 @@ public class HistoryController {
   private final HistoryMapper historyMapper;
 
   @Operation(description = "이슈의 변경이력을 조회한다.")
-  @GetMapping("/{issueId}")
-  public List<HistoryResponse> getHistoryByIssueId(
+  @GetMapping("/{category}/{issueId}")
+  public List<HistoryResponse> getHistoryByCategoryAndIssueId(
+      @PathVariable("category") @Parameter(description = "카테고리 (ex. project, issue)")
+          String category,
       @PathVariable("issueId") @Parameter(description = "이슈 ID") Long issueId) {
-    return historyService.getHistoryByIssueId(issueId).stream()
+    return historyService.getHistoryByCategoryAndIssueId(category, issueId).stream()
         .map(historyMapper::toResponse)
         .collect(Collectors.toList());
   }

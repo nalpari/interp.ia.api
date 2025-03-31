@@ -1,6 +1,6 @@
 package net.devgrr.interp.ia.api.config.mapStruct;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Set;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.Priority;
@@ -8,10 +8,12 @@ import net.devgrr.interp.ia.api.member.entity.Member;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring")
 public interface ProjectMapper {
@@ -47,33 +49,42 @@ public interface ProjectMapper {
    * */
 
   @Mapping(target = "status", source = "status")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Project putProjectStatus(@MappingTarget Project project, Integer dummy, IssueStatus status);
 
   @Mapping(target = "priority", source = "priority")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Project putProjectPriority(@MappingTarget Project project, Integer dummy, Priority priority);
 
   @Mapping(target = "title", source = "title")
-  Project putProjectTitle(@MappingTarget Project project, Integer dummy, String title);
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Project putProjectTitle(@MappingTarget Project project, String title);
 
   @Mapping(target = "subTitle", source = "subTitle")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Project putProjectSubTitle(@MappingTarget Project project, Integer dummy, String subTitle);
 
   @Mapping(target = "dueDate", source = "dueDate")
-  Project putProjectDueDate(@MappingTarget Project project, Integer dummy, LocalDateTime dueDate);
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Project putProjectDueDate(@MappingTarget Project project, Integer dummy, LocalDate dueDate);
 
   @Mapping(target = "startDate", source = "startDate")
-  Project putProjectStartDate(
-      @MappingTarget Project project, Integer dummy, LocalDateTime startDate);
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Project putProjectStartDate(@MappingTarget Project project, Integer dummy, LocalDate startDate);
 
   @Mapping(target = "endDate", source = "endDate")
-  Project putProjectEndDate(@MappingTarget Project project, Integer dummy, LocalDateTime endDate);
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Project putProjectEndDate(@MappingTarget Project project, Integer dummy, LocalDate endDate);
 
   @Mapping(target = "description", source = "description")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Project putProjectDescription(@MappingTarget Project project, Integer dummy, String description);
 
   @Mapping(target = "assignee", source = "assignee")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Project putProjectAssignee(@MappingTarget Project project, Integer dummy, Set<Member> assignee);
 
   @Mapping(target = "tag", source = "tag")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Project putProjectTag(@MappingTarget Project project, Integer dummy, Set<String> tag);
 }
