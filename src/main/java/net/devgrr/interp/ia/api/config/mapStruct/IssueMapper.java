@@ -1,5 +1,6 @@
 package net.devgrr.interp.ia.api.config.mapStruct;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
@@ -65,4 +66,59 @@ public interface IssueMapper {
   @Mapping(target = "priority", source = "req.priority", qualifiedByName = "toIssuePriority")
   @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Issue toIssue(IssueRequest req);
+
+  /*
+   * 참고
+   * - null 데이터도 그대로 업데이트 하기 위해 dummy 파라미터 추가
+   * - List 유형을 파라미터로 넘겼을 때 아래와 같은 에러를 막기 위해 dummy 파라미터 추가
+   *      ERROR: Can't generate mapping method from iterable type from java stdlib to non-iterable type.
+   * */
+
+  @Mapping(target = "type", source = "type")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueType(@MappingTarget Issue issue, Integer dummy, IssueType type);
+
+  @Mapping(target = "status", source = "status")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueStatus(@MappingTarget Issue issue, Integer dummy, IssueStatus status);
+
+  @Mapping(target = "priority", source = "priority")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssuePriority(@MappingTarget Issue issue, Integer dummy, Priority priority);
+
+  @Mapping(target = "title", source = "title")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueTitle(@MappingTarget Issue issue, String title);
+
+  @Mapping(target = "subTitle", source = "subTitle")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueSubTitle(@MappingTarget Issue issue, Integer dummy, String subTitle);
+
+  @Mapping(target = "dueDate", source = "dueDate")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueDueDate(@MappingTarget Issue issue, Integer dummy, LocalDate dueDate);
+
+  @Mapping(target = "startDate", source = "startDate")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueStartDate(@MappingTarget Issue issue, Integer dummy, LocalDate startDate);
+
+  @Mapping(target = "endDate", source = "endDate")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueEndDate(@MappingTarget Issue issue, Integer dummy, LocalDate endDate);
+
+  @Mapping(target = "description", source = "description")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueDescription(@MappingTarget Issue issue, Integer dummy, String description);
+
+  @Mapping(target = "assignee", source = "assignee")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueAssignee(@MappingTarget Issue issue, Integer dummy, Set<Member> assignee);
+
+  @Mapping(target = "tag", source = "tag")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueTag(@MappingTarget Issue issue, Integer dummy, Set<String> tag);
+
+  @Mapping(target = "relatedIssues", source = "relatedIssues")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  Issue putIssueRelatedIssues(@MappingTarget Issue issue, Integer dummy, Set<Issue> relatedIssues);
 }

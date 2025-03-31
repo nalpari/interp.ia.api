@@ -3,9 +3,12 @@ package net.devgrr.interp.ia.api.work.issue;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.IssueType;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.IssueMapper;
+import net.devgrr.interp.ia.api.config.swagger.annotation.SwaggerBody;
 import net.devgrr.interp.ia.api.work.issue.dto.IssueRequest;
 import net.devgrr.interp.ia.api.work.issue.dto.IssueResponse;
 import net.devgrr.interp.ia.api.work.issue.dto.IssueValidationGroup;
@@ -24,6 +28,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,23 +70,22 @@ public class IssueController {
   @GetMapping("/search")
   public List<IssueResponse> getIssuesByKeywords(
       @RequestParam(value = "projectId", required = false) @Parameter(description = "상위 프로젝트 ID")
-          List<Long> projectId,
+          Long projectId,
       @RequestParam(value = "parentIssueId", required = false) @Parameter(description = "상위 이슈 ID")
-          List<Long> parentIssueId,
+          Long parentIssueId,
       @RequestParam(value = "issueId", required = false) @Parameter(description = "이슈 ID")
-          List<Long> issueId,
-      @RequestParam(value = "type", required = false) @Parameter(description = "유형")
-          List<IssueType> type,
+          Long issueId,
+      @RequestParam(value = "type", required = false) @Parameter(description = "유형") IssueType type,
       @RequestParam(value = "status", required = false) @Parameter(description = "상태")
-          List<IssueStatus> status,
+          IssueStatus status,
       @RequestParam(value = "priority", required = false) @Parameter(description = "중요도")
-          List<Priority> priority,
+          Priority priority,
       @RequestParam(value = "title", required = false) @Parameter(description = "이슈 제목")
           String title,
       @RequestParam(value = "subTitle", required = false) @Parameter(description = "이슈 부제목")
           String subTitle,
       @RequestParam(value = "creatorId", required = false) @Parameter(description = "생성자 ID")
-          List<Long> creatorId,
+          Long creatorId,
       @RequestParam(value = "assigneeId", required = false) @Parameter(description = "담당자 ID")
           List<Long> assigneeId,
       @RequestParam(value = "createdDateFrom", required = false)
@@ -170,6 +174,46 @@ public class IssueController {
       @AuthenticationPrincipal UserDetails userDetails)
       throws BaseException {
     return issueMapper.toResponse(issueService.setIssues(req, userDetails.getUsername()));
+  }
+
+  @Operation(
+      description =
+          """
+          이슈 정보를 수정한다.
+
+          수정할 필드명은 key, 수정 데이터는 value의 JSON 형태로 입력한다.
+          (단, 상/하위 관계는 직접 수정 불가)
+
+          key 목록 및 value 타입
+          - title (제목) - String
+          - subTitle (부제목) - String
+          - type (유형) - String
+          - status (상태) - String
+          - priority (중요도) - String
+          - assigneeId (담당자 ID) - List<Integer>
+          - dueDate (기한일) - String (format: yyyy-MM-dd)
+          - startDate (시작일) - String (format: yyyy-MM-dd)
+          - endDate (종료일) - String (format: yyyy-MM-dd)
+          - description (내용) - String
+          - tag (태그) - List<String>
+          - relatedIssuesId (연관 이슈 ID) - List<Integer>
+          """)
+  @SwaggerBody(
+      content =
+          @Content(
+              mediaType = "application/json",
+              examples = {
+                @ExampleObject(name = "제목 수정 요청", value = "{\"title\": \"제목 수정\"}"),
+                @ExampleObject(name = "담당자 수정 요청", value = "{\"assigneeId\": [1, 2]}"),
+                @ExampleObject(name = "기한일 수정 요청", value = "{\"dueDate\": \"2025-01-01\"}")
+              }))
+  @PatchMapping("/{id}")
+  public void putIssuesById(
+      @PathVariable("id") @Parameter(description = "이슈 ID") Long id,
+      @RequestBody Map<String, Object> req,
+      @AuthenticationPrincipal UserDetails userDetails)
+      throws BaseException {
+    issueService.putIssuesById(id, req, userDetails);
   }
 
   @Operation(description = "이슈를 삭제한다.")
