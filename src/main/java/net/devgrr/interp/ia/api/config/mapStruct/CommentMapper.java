@@ -42,7 +42,11 @@ public interface CommentMapper {
     @Mapping(source = "childComments", target = "childComment")
     CommentResponse toResponseWithChildren(Comment parentComment, List<CommentResponse> childComments);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "content", source = "req.content")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "parentCommentId", ignore = true)
+    @Mapping(target = "member", ignore = true)
+    @Mapping(target = "referenceType", ignore = true)
+    @Mapping(target = "referenceId", ignore = true)
     Comment updateComment(CommentRequest req, @MappingTarget Comment comment);
 }
