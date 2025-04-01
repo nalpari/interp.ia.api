@@ -25,4 +25,7 @@ public class MapStructConfig {
   public HistoryMapper historyMapper() {
     return new HistoryMapperImpl();
   }
+
+  @Bean
+  public CommentMapper commentMapper() {return new CommentMapperImpl();}
 }
