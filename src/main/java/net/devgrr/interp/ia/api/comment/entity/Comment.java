@@ -22,7 +22,7 @@ public class Comment extends BaseEntity {
     private Long id;
 
     @Schema(description = "부모 댓글 ID")
-    private Integer parentCommentId;
+    private Long parentCommentId;
 
     @Schema(description = "댓글 내용")
     @Column(nullable = false)
