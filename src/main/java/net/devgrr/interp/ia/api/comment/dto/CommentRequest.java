@@ -7,12 +7,12 @@ import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "댓글 요청")
 public record CommentRequest(
-        @Schema(description = "댓글 ID")
+    @Schema(description = "댓글 ID")
         @NotNull(message = "필수값: 댓글 ID", groups = CommentValidationGroup.putGroup.class)
         Long id,
     @Schema(description = "댓글이 달린 Entity 타입 (Issue/Project)")
-        @NotNull(message = "필수값: reference type",
-                groups = CommentValidationGroup.postGroup.class)
+        @NotNull(message = "필수값: reference type", groups = CommentValidationGroup.postGroup.class)
+        @JsonView(CommentValidationGroup.postGroup.class)
         String referenceType,
     @Schema(description = "댓글이 달린 Entity ID")
         @NotNull(message = "필수값: Entity id", groups = CommentValidationGroup.postGroup.class)

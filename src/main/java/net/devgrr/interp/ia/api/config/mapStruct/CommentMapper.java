@@ -4,9 +4,9 @@ import java.util.List;
 import net.devgrr.interp.ia.api.comment.dto.CommentRequest;
 import net.devgrr.interp.ia.api.comment.dto.CommentResponse;
 import net.devgrr.interp.ia.api.comment.entity.Comment;
-import net.devgrr.interp.ia.api.comment.entity.ReferenceType;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.mapstruct.*;
 
@@ -14,15 +14,15 @@ import org.mapstruct.*;
 public interface CommentMapper {
 
     @Named("toReferenceType")
-    static ReferenceType toReferenceType(String type) throws BaseException {
+    static IssueCategory toReferenceType(String type) throws BaseException {
         if (type == null) {
             throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "참조 타입이 비어 있습니다. (issue/project)");
         }
         String r = type.toUpperCase();
         if("ISSUE".equals(r)) {
-            return ReferenceType.ISSUE;
+            return IssueCategory.ISSUE;
         } else if("PROJECT".equals(r)) {
-            return ReferenceType.PROJECT;
+            return IssueCategory.PROJECT;
         } else {
             throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "참조 타입이 잘못되었습니다. (issue/project)");
         }

@@ -7,10 +7,9 @@ import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.comment.dto.CommentRequest;
 import net.devgrr.interp.ia.api.comment.dto.CommentResponse;
 import net.devgrr.interp.ia.api.comment.entity.Comment;
-import net.devgrr.interp.ia.api.comment.entity.ReferenceType;
-import net.devgrr.interp.ia.api.comment.repo.CommentRepository;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.config.mapStruct.CommentMapper;
 import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.MemberRole;
@@ -40,16 +39,16 @@ public class CommentService {
   }
 
   private void verifyRefType(String type, Long id) throws BaseException {
-    ReferenceType refType = parseReferenceType(type);
+    IssueCategory refType = parseReferenceType(type);
 
-    if (refType == ReferenceType.PROJECT && !projectRepository.existsById(id)) {
+    if (refType == IssueCategory.PROJECT && !projectRepository.existsById(id)) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다.");
     }
   }
 
-  private ReferenceType parseReferenceType(String type) throws BaseException {
+  private IssueCategory parseReferenceType(String type) throws BaseException {
     try {
-      return ReferenceType.valueOf(type.toUpperCase());
+      return IssueCategory.valueOf(type.toUpperCase());
     } catch (IllegalArgumentException e) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "참조 타입이 잘못되었습니다. (ISSUE/PROJECT)");
     }
@@ -57,7 +56,7 @@ public class CommentService {
 
   public List<Comment> getCommentsById(String referenceType, Long id) throws BaseException {
     verifyRefType(referenceType, id);
-    return commentRepository.findAllByReferenceTypeAndId(ReferenceType.valueOf(referenceType.toUpperCase()), id);
+    return commentRepository.findAllByReferenceTypeAndReferenceId(IssueCategory.valueOf(referenceType.toUpperCase()), id);
   }
 
   public List<CommentResponse> getCommentsByIdWithHierarchy(String referenceType, Long id) throws BaseException {
@@ -94,8 +93,6 @@ public class CommentService {
 
   @Transactional
   public Comment putComments(CommentRequest req, String username) throws BaseException {
-    verifyRefType(req.referenceType(), req.referenceId());
-
     Comment comment = commentRepository.findById(req.id()).orElseThrow(
             () -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "댓글을 찾을 수 없습니다."));
 

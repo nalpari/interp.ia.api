@@ -3,10 +3,9 @@ package net.devgrr.interp.ia.api.comment.entity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
-import net.devgrr.interp.ia.api.comment.dto.CommentRequest;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import net.devgrr.interp.ia.api.model.entity.BaseEntity;
-import net.devgrr.interp.ia.api.work.issue.entity.Issue;
 
 @Getter
 @Setter
@@ -37,9 +36,9 @@ public class Comment extends BaseEntity {
     @Schema(description = "프로젝트 / 이슈 구분")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReferenceType referenceType;
+    private IssueCategory referenceType;
 
     @Schema(description = "댓글이 달린 Entity의 ID")
     @Column(nullable = false)
-    private Integer referenceId;
+    private Long referenceId;
 }
