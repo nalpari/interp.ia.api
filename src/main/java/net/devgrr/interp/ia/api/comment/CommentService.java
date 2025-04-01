@@ -14,6 +14,7 @@ import net.devgrr.interp.ia.api.config.mapStruct.CommentMapper;
 import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.MemberRole;
 import net.devgrr.interp.ia.api.member.entity.Member;
+import net.devgrr.interp.ia.api.work.issue.IssueRepository;
 import net.devgrr.interp.ia.api.work.project.ProjectRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ public class CommentService {
   private final MemberRepository memberRepository;
   private final CommentRepository commentRepository;
   private final ProjectRepository projectRepository;
+  private final IssueRepository issueRepository;
 
   @Transactional
   public Comment setComments(CommentRequest req, String userEmail) throws BaseException {
@@ -35,6 +37,7 @@ public class CommentService {
             .findByEmail(userEmail)
             .orElseThrow(
                 () -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보를 찾을 수 없습니다."));
+    verifyRefType(req.referenceType(), req.referenceId());
     return commentRepository.save(commentMapper.toComment(req, member));
   }
 
@@ -43,6 +46,9 @@ public class CommentService {
 
     if (refType == IssueCategory.PROJECT && !projectRepository.existsById(id)) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다.");
+    }
+    if(refType == IssueCategory.ISSUE && !issueRepository.existsById(id)) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 이슈입니다.");
     }
   }
 
