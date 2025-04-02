@@ -91,10 +91,14 @@ public class MemberController {
     memberService.putUsersActiveByEmail(email);
   }
 
-  @Operation(description = "파일을 입력받아 데이터를 저장한다.<br>확장자가 .csv, .xlsx, .xls 인 것만 가능<br>입력된 데이터 중 같은 email 존재 시 해당 데이터 제외하고 저장")
+  @Operation(
+      description =
+          "파일을 입력받아 데이터를 저장한다.<br>확장자가 .csv, .xlsx, .xls 인 것만 가능<br>입력된 데이터 중 같은 email 존재 시 해당 데이터 제외하고 저장")
   @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public void uploadMemberFile(@RequestPart("file")
-                                 @Parameter(description = "MemberRequest 에 정의된 모든 필드들이 포함되어야 함") MultipartFile file) throws Exception {
+  public void uploadMemberFile(
+      @RequestPart("file") @Parameter(description = "MemberRequest 에 정의된 모든 필드들이 포함되어야 함")
+          MultipartFile file)
+      throws Exception {
     memberFileService.uploadMemberFile(file);
   }
 

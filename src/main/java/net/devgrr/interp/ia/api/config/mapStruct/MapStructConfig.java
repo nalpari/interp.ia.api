@@ -27,5 +27,7 @@ public class MapStructConfig {
   }
 
   @Bean
-  public CommentMapper commentMapper() {return new CommentMapperImpl();}
+  public CommentMapper commentMapper() {
+    return new CommentMapperImpl();
+  }
 }
