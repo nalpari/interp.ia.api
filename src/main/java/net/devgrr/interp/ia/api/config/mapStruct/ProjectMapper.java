@@ -37,9 +37,14 @@ public interface ProjectMapper {
   @Mapping(target = "priority", source = "req.priority", qualifiedByName = "toIssuePriority")
   @Mapping(target = "creator", source = "creator")
   @Mapping(target = "assignee", source = "assignee")
+  @Mapping(target = "isDeleted", constant = "false")
   Project toProject(ProjectRequest req, Member creator, Set<Member> assignee);
 
   ProjectResponse toResponse(Project project);
+
+  @Mapping(target = "isDeleted", source = "flag")
+  @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
+  void putProjectDeletedFlag(@MappingTarget Project project, Boolean flag);
 
   /*
    * 참고

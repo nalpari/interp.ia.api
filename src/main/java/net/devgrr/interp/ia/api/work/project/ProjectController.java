@@ -24,7 +24,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -135,7 +134,7 @@ public class ProjectController {
   @Operation(description = "프로젝트를 조회한다. 프로젝트의 하위 이슈는 최상위 이슈만 조회한다.")
   @GetMapping("/{id}")
   public ProjectResponse getProjectsById(
-      @PathVariable("id") @Parameter(description = "프로젝트 ID") Long id) {
+      @PathVariable("id") @Parameter(description = "프로젝트 ID") Long id) throws BaseException {
     return projectMapper.toResponse(projectService.getProjectsById(id));
   }
 
@@ -186,20 +185,17 @@ public class ProjectController {
     projectService.putProjectsById(id, req, userDetails);
   }
 
-  /**
-   * TODO
-   *
-   * <p>- 삭제 정책 필요(삭제 플래그를 활용할 것인지)
-   *
-   * <p>- 삭제 시 연관된 데이터(issue, history) 삭제 여부
-   *
-   * <p>- 삭제 권한 처리 추가
-   */
   @Operation(description = "프로젝트를 삭제한다.")
-  @DeleteMapping("/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @PatchMapping("/{id}/delete")
   public void delProjectsById(@PathVariable("id") @Parameter(description = "프로젝트 ID") Long id)
       throws BaseException {
-    projectService.delProjectsById(id);
+    projectService.putProjectsDeletedFlagById(id, true);
+  }
+
+  @Operation(description = "프로젝트를 복구한다.")
+  @PatchMapping("/{id}/restore")
+  public void restoreProjectsById(@PathVariable("id") @Parameter(description = "프로젝트 ID") Long id)
+      throws BaseException {
+    projectService.putProjectsDeletedFlagById(id, false);
   }
 }

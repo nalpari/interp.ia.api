@@ -26,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -217,10 +216,16 @@ public class IssueController {
   }
 
   @Operation(description = "이슈를 삭제한다.")
-  @DeleteMapping("/{id}")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @PatchMapping("/{id}/delete")
   public void deleteIssuesById(@PathVariable("id") @Parameter(description = "이슈 ID") Long id)
       throws BaseException {
-    issueService.deleteIssuesById(id);
+    issueService.putIssuesDeletedFlagById(id, true);
+  }
+
+  @Operation(description = "이슈를 복구한다.")
+  @PatchMapping("/{id}/restore")
+  public void restoreIssuesById(@PathVariable("id") @Parameter(description = "이슈 ID") Long id)
+      throws BaseException {
+    issueService.putIssuesDeletedFlagById(id, false);
   }
 }
