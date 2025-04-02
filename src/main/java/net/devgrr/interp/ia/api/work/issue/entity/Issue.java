@@ -120,5 +120,9 @@ public class Issue extends BaseEntity {
   @Schema(description = "연관 이슈")
   private Set<Issue> relatedIssues;
 
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  @Schema(description = "삭제 여부 (true: 삭제, false: 비삭제)")
+  private Boolean isDeleted;
+
   public Issue() {}
 }
