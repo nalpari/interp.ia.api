@@ -58,13 +58,14 @@ public class SecurityConfig {
                     .hasAnyRole("USER", "ADMIN")
                     .requestMatchers(
                         new AntPathRequestMatcher("/swagger-ui/**"),
-                        new AntPathRequestMatcher("/v3/api-docs/**"))
+                        new AntPathRequestMatcher("/v3/api-docs/**"),
+                        new AntPathRequestMatcher("/test/**"))
                     .permitAll()
                     .requestMatchers(
                         new AntPathRequestMatcher("/login"),
                         new AntPathRequestMatcher("/api/users/signup"),
                         new AntPathRequestMatcher("/error"))
-                        .permitAll()
+                    .permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/admin"))
                     .hasRole("ADMIN")
                     .anyRequest()
