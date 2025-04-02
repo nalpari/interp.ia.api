@@ -2,6 +2,7 @@ package net.devgrr.interp.ia.api.work.project;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +71,7 @@ public class ProjectService {
           .leftJoin(qProject.subIssues, qIssue)
           .fetchJoin()
           .where(
+              qProject.isDeleted.isFalse(),
               status != null ? qProject.status.eq(status) : null,
               priority != null ? qProject.priority.eq(priority) : null,
               StringUtils.hasText(title) ? qProject.title.like("%" + title + "%") : null,
@@ -106,15 +108,20 @@ public class ProjectService {
     }
   }
 
-  public Project getProjectsById(Long id) {
-    return queryFactory
-        .selectFrom(qProject)
-        .innerJoin(qProject.creator, qMember)
-        .leftJoin(qProject.subIssues, qIssue)
-        .fetchJoin()
-        .where(qProject.id.eq(id).and(qIssue.parentIssue.isNull()))
-        .orderBy(qProject.creator.name.asc(), qIssue.createdDate.asc())
-        .fetchOne();
+  public Project getProjectsById(Long id) throws BaseException {
+    Project project =
+        queryFactory
+            .selectFrom(qProject)
+            .innerJoin(qProject.creator, qMember)
+            .leftJoin(qProject.subIssues, qIssue)
+            .fetchJoin()
+            .where(qProject.isDeleted.isFalse(), qProject.id.eq(id), qIssue.parentIssue.isNull())
+            .orderBy(qProject.creator.name.asc(), qIssue.createdDate.asc())
+            .fetchOne();
+    if (project == null) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다. (id: " + id + ")");
+    }
+    return project;
   }
 
   @Transactional
@@ -134,18 +141,13 @@ public class ProjectService {
   @Transactional
   public void putProjectsById(Long id, Map<String, Object> req, UserDetails userDetails)
       throws BaseException {
+    Project originProject = getProjectsById(id);
     try {
-
-      Project originProject = getProjectsById(id);
-      if (originProject == null) {
-        throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다.");
-      }
-
       String key = req.keySet().iterator().next();
       Object value = req.values().iterator().next();
       Member modifier = memberService.getUsersByEmail(userDetails.getUsername());
-      String beforeValue = null;
-      String afterValue = null;
+      String beforeValue;
+      String afterValue;
 
       switch (key) {
         case "status":
@@ -223,7 +225,7 @@ public class ProjectService {
       }
 
       historyService.setHistory(
-          IssueCategory.PROJECT.getValue(), id, beforeValue, afterValue, key, modifier);
+          IssueCategory.PROJECT, id, beforeValue, afterValue, key, modifier);
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -241,9 +243,22 @@ public class ProjectService {
   }
 
   @Transactional
-  public void delProjectsById(Long id) throws BaseException {
+  public void putProjectsDeletedFlagById(Long id, Boolean flag) throws BaseException {
+    Project project =
+        projectRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new BaseException(
+                        ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 프로젝트입니다. (id: " + id + ")"));
     try {
-      projectRepository.deleteById(id);
+      queryFactory
+          .update(qIssue)
+          .set(qIssue.isDeleted, flag)
+          .set(qIssue.updatedDate, LocalDateTime.now())
+          .where(qIssue.parentProject.id.eq(id))
+          .execute();
+      projectMapper.putProjectDeletedFlag(project, flag);
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }

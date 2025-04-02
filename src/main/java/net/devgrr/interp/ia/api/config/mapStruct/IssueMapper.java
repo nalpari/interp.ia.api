@@ -64,6 +64,7 @@ public interface IssueMapper {
   @Mapping(target = "type", source = "req.type", qualifiedByName = "toIssueType")
   @Mapping(target = "status", source = "req.status", qualifiedByName = "toIssueStatus")
   @Mapping(target = "priority", source = "req.priority", qualifiedByName = "toIssuePriority")
+  @Mapping(target = "isDeleted", constant = "false")
   @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
   Issue toIssue(IssueRequest req);
 

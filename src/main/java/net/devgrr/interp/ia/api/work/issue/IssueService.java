@@ -2,12 +2,15 @@ package net.devgrr.interp.ia.api.work.issue;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
@@ -46,7 +49,6 @@ public class IssueService {
   private final HistoryService historyService;
 
   private final QIssue qIssue = QIssue.issue;
-  private final QIssue qRelatedIssue = new QIssue("qRelatedIssue");
   private final QProject qProject = QProject.project;
   private final QMember qCreator = new QMember("qCreator");
   private final QMember qAssignee = new QMember("qAssignee");
@@ -61,6 +63,7 @@ public class IssueService {
               .leftJoin(qIssue.assignee, qAssignee)
               .fetchJoin()
               .where(
+                  qIssue.isDeleted.isFalse(),
                   projectId != null && projectId > 0 ? qIssue.parentProject.id.eq(projectId) : null,
                   issueId != null && issueId > 0
                       ? qIssue.id.eq(issueId)
@@ -112,6 +115,7 @@ public class IssueService {
           .leftJoin(qIssue.assignee, qAssignee)
           .fetchJoin()
           .where(
+              qIssue.isDeleted.isFalse(),
               issueId != null && issueId > 0 ? qIssue.id.eq(issueId) : null,
               projectId != null && projectId > 0 ? qIssue.parentProject.id.eq(projectId) : null,
               parentIssueId != null && parentIssueId > 0
@@ -152,27 +156,29 @@ public class IssueService {
     }
   }
 
-  public Issue getIssuesById(Long id) {
-    return queryFactory
-        .selectFrom(qIssue)
-        .innerJoin(qIssue.creator, qCreator)
-        .innerJoin(qIssue.parentProject, qProject)
-        .leftJoin(qIssue.assignee, qAssignee)
-        .fetchJoin()
-        .where(qIssue.id.eq(id))
-        .orderBy(qAssignee.name.asc())
-        .fetchOne();
+  public Issue getIssuesById(Long id) throws BaseException {
+    Issue issue =
+        queryFactory
+            .selectFrom(qIssue)
+            .innerJoin(qIssue.creator, qCreator)
+            .innerJoin(qIssue.parentProject, qProject)
+            .leftJoin(qIssue.assignee, qAssignee)
+            .fetchJoin()
+            .where(qIssue.isDeleted.isFalse(), qIssue.id.eq(id))
+            .orderBy(qAssignee.name.asc())
+            .fetchOne();
+    if (issue == null) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 이슈입니다. (id: " + id + ")");
+    }
+    return issue;
   }
 
   public Set<Issue> getIssuesByIds(Set<Long> ids) {
-    return new HashSet<>(issueRepository.findAllById(ids));
+    return new HashSet<>(issueRepository.findAllByIdInAndIsDeletedFalse(ids.stream().toList()));
   }
 
   public Issue getIssueWithRelatedById(Long id) throws BaseException {
     Issue issue = getIssuesById(id);
-    if (issue == null) {
-      throw new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이슈입니다.");
-    }
 
     List<Issue> subIssues = getSubIssuesById(id);
     Set<Issue> relatedIssue = issue.getRelatedIssues();
@@ -188,7 +194,7 @@ public class IssueService {
             .innerJoin(qIssue.creator, qCreator)
             .leftJoin(qIssue.assignee, qAssignee)
             .fetchJoin()
-            .where(qIssue.parentIssue.id.eq(pId))
+            .where(qIssue.isDeleted.isFalse(), qIssue.parentIssue.id.eq(pId))
             .orderBy(qIssue.createdDate.asc(), qAssignee.name.asc())
             .fetch();
     subIssues.forEach(issue -> issueMapper.mapSubIssues(issue, 0, getSubIssuesById(issue.getId())));
@@ -201,7 +207,7 @@ public class IssueService {
         .innerJoin(qIssue.creator, qCreator)
         .leftJoin(qIssue.assignee, qAssignee)
         .fetchJoin()
-        .where(qIssue.relatedIssues.any().id.eq(id))
+        .where(qIssue.isDeleted.isFalse(), qIssue.relatedIssues.any().id.eq(id))
         .orderBy(qIssue.createdDate.asc(), qAssignee.name.asc())
         .fetch();
   }
@@ -243,12 +249,8 @@ public class IssueService {
   @Transactional
   public void putIssuesById(Long id, Map<String, Object> req, UserDetails userDetails)
       throws BaseException {
+    Issue originIssue = getIssuesById(id);
     try {
-      Issue originIssue = getIssuesById(id);
-      if (originIssue == null) {
-        throw new BaseException(ErrorCode.NOT_FOUND, "존재하지 않는 이슈입니다.");
-      }
-
       String key = req.keySet().iterator().next();
       Object value = req.values().iterator().next();
       Member modifier = memberService.getUsersByEmail(userDetails.getUsername());
@@ -346,8 +348,7 @@ public class IssueService {
           throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
       }
 
-      historyService.setHistory(
-          IssueCategory.PROJECT.getValue(), id, beforeValue, afterValue, key, modifier);
+      historyService.setHistory(IssueCategory.PROJECT, id, beforeValue, afterValue, key, modifier);
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -364,14 +365,40 @@ public class IssueService {
   }
 
   @Transactional
-  public void deleteIssuesById(Long id) throws BaseException {
+  public void putIssuesDeletedFlagById(Long id, Boolean flag) throws BaseException {
+    Issue issue =
+        issueRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new BaseException(
+                        ErrorCode.INVALID_INPUT_VALUE, "존재하지 않는 이슈입니다. (id: " + id + ")"));
     try {
-      issueRepository.deleteById(id);
+      List<Long> ids = getAllChildIssueIds(issue.getId());
+      queryFactory
+          .update(qIssue)
+          .set(qIssue.isDeleted, flag)
+          .set(qIssue.updatedDate, LocalDateTime.now())
+          .where(qIssue.id.in(ids))
+          .execute();
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
+  private List<Long> getAllChildIssueIds(Long parentId) {
+    List<Long> ids = new ArrayList<>(List.of(parentId));
+    Queue<Long> queue = new ArrayDeque<>(List.of(parentId));
+    while (!queue.isEmpty()) {
+      Long id = queue.poll();
+      List<Long> subIssueIds =
+          queryFactory.select(qIssue.id).from(qIssue).where(qIssue.parentIssue.id.eq(id)).fetch();
+      queue.addAll(subIssueIds);
+      ids.addAll(subIssueIds);
+    }
+    return ids;
+  }
+  
   public boolean existById(Long id) {
     return issueRepository.existsById(id);
   }

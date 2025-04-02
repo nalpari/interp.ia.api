@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.config.mapStruct.HistoryMapper;
 import net.devgrr.interp.ia.api.work.history.dto.HistoryResponse;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +27,7 @@ public class HistoryController {
   @GetMapping("/{category}/{issueId}")
   public List<HistoryResponse> getHistoryByCategoryAndIssueId(
       @PathVariable("category") @Parameter(description = "카테고리 (ex. project, issue)")
-          String category,
+          IssueCategory category,
       @PathVariable("issueId") @Parameter(description = "이슈 ID") Long issueId) {
     return historyService.getHistoryByCategoryAndIssueId(category, issueId).stream()
         .map(historyMapper::toResponse)
