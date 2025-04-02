@@ -24,18 +24,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentService {
   private final CommentMapper commentMapper;
 
-  private final MemberRepository memberRepository;
   private final CommentRepository commentRepository;
-  private final ProjectRepository projectRepository;
-  private final IssueRepository issueRepository;
+
+  private final MemberService memberService;
+  private final ProjectService projectService;
+  private final IssueService issueService;
 
   @Transactional
   public Comment setComments(CommentRequest req, String userEmail) throws BaseException {
-    Member member =
-        memberRepository
-            .findByEmail(userEmail)
-            .orElseThrow(
-                () -> new BaseException(ErrorCode.INVALID_INPUT_VALUE, "회원 정보를 찾을 수 없습니다."));
+    Member member = memberService.getUsersByEmail(userEmail);
     verifyRefType(req.referenceType(), req.referenceId());
     return commentRepository.save(commentMapper.toComment(req, member));
   }
