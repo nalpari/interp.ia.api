@@ -225,7 +225,7 @@ public class ProjectService {
       }
 
       historyService.setHistory(
-          IssueCategory.PROJECT.getValue(), id, beforeValue, afterValue, key, modifier);
+          IssueCategory.PROJECT, id, beforeValue, afterValue, key, modifier);
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());

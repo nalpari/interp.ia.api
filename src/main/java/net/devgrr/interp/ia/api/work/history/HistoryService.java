@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
 import net.devgrr.interp.ia.api.config.exception.ErrorCode;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import net.devgrr.interp.ia.api.work.history.entity.History;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class HistoryService {
   private final HistoryRepository historyRepository;
 
-  public List<History> getHistoryByCategoryAndIssueId(String category, Long issueId) {
-    return historyRepository.findAllByCategoryAndIssueId(category, issueId);
+  public List<History> getHistoryByCategoryAndIssueId(IssueCategory category, Long issueId) {
+    return historyRepository.findAllByCategoryAndIssueId(category.getValue(), issueId);
   }
 
   @Transactional
   public void setHistory(
-      String category,
+      IssueCategory category,
       Long issueId,
       String beforeValue,
       String afterValue,
