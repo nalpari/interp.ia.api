@@ -96,13 +96,6 @@ public class Project extends BaseEntity {
   @Schema(description = "태그")
   private Set<String> tag;
 
-  /*
-   * TODO: 댓글 추가
-   * */
-  //  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-  //  @Schema(description = "댓글")
-  //  private List<IssueComment> comments;
-
   @OneToMany(mappedBy = "parentProject")
   @Schema(description = "하위 이슈")
   private Set<Issue> subIssues;
