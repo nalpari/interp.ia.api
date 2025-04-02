@@ -9,8 +9,7 @@ import java.lang.annotation.*;
 
 /**
  * org.springframework.web.bind.annotation.RequestBody
- * io.swagger.v3.oas.annotations.parameters.RequestBody
- * 구분하기 위해 어노테이션 재정의
+ * io.swagger.v3.oas.annotations.parameters.RequestBody 구분하기 위해 어노테이션 재정의
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

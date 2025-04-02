@@ -263,4 +263,8 @@ public class ProjectService {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
+
+  public boolean existById(Long id) {
+    return projectRepository.existsById(id);
+  }
 }

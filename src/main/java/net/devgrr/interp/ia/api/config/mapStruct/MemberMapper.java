@@ -53,7 +53,6 @@ public interface MemberMapper {
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   void updateMember(MemberUpdateRequest req, @MappingTarget Member member) throws BaseException;
 
-
   @Mapping(target = "isActive", expression = "java(false)")
   @Mapping(target = "updatedDate", expression = "java(java.time.LocalDateTime.now())")
   void deactivateMember(Member source, @MappingTarget Member member) throws BaseException;

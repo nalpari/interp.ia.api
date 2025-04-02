@@ -12,6 +12,7 @@ import net.devgrr.interp.ia.api.comment.dto.CommentRequest;
 import net.devgrr.interp.ia.api.comment.dto.CommentResponse;
 import net.devgrr.interp.ia.api.comment.dto.CommentValidationGroup;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
+import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.config.mapStruct.CommentMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,7 +45,7 @@ public class CommentController {
   @GetMapping("/{referenceType}/{id}")
   public List<CommentResponse> getCommentsById(
       @PathVariable("referenceType") @Parameter(description = "참조 타입 (issue/project)")
-          String referenceType,
+          IssueCategory referenceType,
       @PathVariable("id") @Parameter(description = "참조 ID") Long id,
       @RequestParam(value = "nested", required = false, defaultValue = "false")
           @Parameter(description = "중첩구조 여부")

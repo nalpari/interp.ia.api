@@ -398,4 +398,8 @@ public class IssueService {
     }
     return ids;
   }
+  
+  public boolean existById(Long id) {
+    return issueRepository.existsById(id);
+  }
 }

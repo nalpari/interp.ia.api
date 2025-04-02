@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import net.devgrr.interp.ia.api.comment.dto.CommentRequest;
 import net.devgrr.interp.ia.api.comment.dto.CommentResponse;
@@ -15,13 +16,17 @@ import net.devgrr.interp.ia.api.config.issue.IssueCategory;
 import net.devgrr.interp.ia.api.config.mapStruct.CommentMapper;
 import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.MemberRole;
+import net.devgrr.interp.ia.api.member.MemberService;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import net.devgrr.interp.ia.api.work.issue.IssueRepository;
+import net.devgrr.interp.ia.api.work.issue.IssueService;
 import net.devgrr.interp.ia.api.work.project.ProjectRepository;
+import net.devgrr.interp.ia.api.work.project.ProjectService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,7 +40,10 @@ public class commentServiceTest {
   @Mock CommentRepository commentRepository;
   @Mock ProjectRepository projectRepository;
   @Mock MemberRepository memberRepository;
-  @Mock IssueRepository issueRepository;
+
+  @Mock private MemberService memberService;
+  @Mock private ProjectService projectService;
+  @Mock private IssueService issueService;
 
   private Comment comment;
   private CommentRequest commentRequest;
@@ -57,10 +65,10 @@ public class commentServiceTest {
             .parentCommentId(null)
             .build();
 
-    commentRequest = new CommentRequest(null, "project", 10L, null, "This is a comment");
+    commentRequest = new CommentRequest(null, IssueCategory.PROJECT, 10L, null, "This is a comment");
     commentService =
         new CommentService(
-            commentMapper, memberRepository, commentRepository, projectRepository, issueRepository);
+            commentMapper, commentRepository, memberService, projectService, issueService);
   }
 
   @Nested
@@ -92,7 +100,9 @@ public class commentServiceTest {
         when(memberRepository.findByEmail("admin@admin.com"))
             .thenReturn(Optional.ofNullable(member));
 
-        commentRequest = new CommentRequest(null, "wrong", 10L, null, "This is a comment");
+        commentRequest =
+            new CommentRequest(
+                null, IssueCategory.valueOf("wrong"), 10L, null, "This is a comment");
 
         BaseException exception =
             assertThrows(
@@ -108,7 +118,8 @@ public class commentServiceTest {
             .thenReturn(Optional.ofNullable(member));
         when(projectRepository.existsById(1L)).thenReturn(false);
 
-        commentRequest = new CommentRequest(null, "project", 1L, null, "This is a comment");
+        commentRequest =
+            new CommentRequest(null, IssueCategory.PROJECT, 1L, null, "This is a comment");
 
         BaseException exception =
             assertThrows(
@@ -176,7 +187,8 @@ public class commentServiceTest {
             .thenReturn(parentResp);
         when(projectRepository.existsById(10L)).thenReturn(true);
 
-        List<CommentResponse> result = commentService.getCommentsByIdWithHierarchy("project", 10L);
+        List<CommentResponse> result =
+            commentService.getCommentsByIdWithHierarchy(IssueCategory.PROJECT, 10L);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -193,7 +205,7 @@ public class commentServiceTest {
             .thenReturn(comments);
         when(projectRepository.existsById(10L)).thenReturn(true);
 
-        List<Comment> result = commentService.getCommentsById("project", 10L);
+        List<Comment> result = commentService.getCommentsById(IssueCategory.PROJECT, 10L);
 
         Assertions.assertEquals(comments, result);
       }
@@ -206,7 +218,9 @@ public class commentServiceTest {
       @DisplayName("잘못된 referenceType 으로 댓글 조회 시도")
       public void WrongReferenceTypeTest() {
         BaseException exception =
-            assertThrows(BaseException.class, () -> commentService.getCommentsById("wrong", 10L));
+            assertThrows(
+                BaseException.class,
+                () -> commentService.getCommentsById(IssueCategory.valueOf("wrong"), 10L));
 
         Assertions.assertEquals("참조 타입이 잘못되었습니다. (ISSUE/PROJECT)", exception.getMessage());
       }
@@ -217,7 +231,9 @@ public class commentServiceTest {
         when(projectRepository.existsById(99L)).thenReturn(false);
 
         BaseException exception =
-            assertThrows(BaseException.class, () -> commentService.getCommentsById("project", 99L));
+            assertThrows(
+                BaseException.class,
+                () -> commentService.getCommentsById(IssueCategory.valueOf("wrong"), 99L));
 
         Assertions.assertEquals("존재하지 않는 프로젝트입니다.", exception.getMessage());
       }
@@ -245,7 +261,7 @@ public class commentServiceTest {
         when(commentMapper.updateComment(any(CommentRequest.class), any(Comment.class)))
             .thenReturn(expected);
 
-        commentRequest = new CommentRequest(90L, "project", 10L, null, "update!!!");
+        commentRequest = new CommentRequest(90L, IssueCategory.PROJECT, 10L, null, "update!!!");
 
         Comment updateComment = commentService.putComments(commentRequest, "admin@admin.com");
 
@@ -259,7 +275,7 @@ public class commentServiceTest {
       @Test
       @DisplayName("존재하지 않는 댓글 수정 시도")
       public void putCommentsTest() {
-        commentRequest = new CommentRequest(80L, "project", 10L, null, "test");
+        commentRequest = new CommentRequest(80L, IssueCategory.PROJECT, 10L, null, "test");
 
         BaseException exception =
             assertThrows(
@@ -274,7 +290,7 @@ public class commentServiceTest {
       public void notOwnPutCommentsTest() {
         when(commentRepository.findById(99L)).thenReturn(Optional.ofNullable(comment));
 
-        commentRequest = new CommentRequest(99L, "project", 10L, null, "test");
+        commentRequest = new CommentRequest(99L, IssueCategory.PROJECT, 10L, null, "test");
         BaseException exception =
             assertThrows(
                 BaseException.class, () -> commentService.putComments(commentRequest, "wrong"));
@@ -317,7 +333,7 @@ public class commentServiceTest {
 
         assertDoesNotThrow(
             () -> commentService.delCommentsById(90L, mockUser("user1@naver.com", "ROLE_USER")));
-        verify(commentRepository, times(1)).delete(delComment);
+        verify(commentRepository, times(1)).delete(Objects.requireNonNull(delComment));
       }
     }
 
