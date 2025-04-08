@@ -1,6 +1,8 @@
 package net.devgrr.interp.ia.api.work.project;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.servlet.ServletOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -23,8 +25,10 @@ import net.devgrr.interp.ia.api.util.DateUtil;
 import net.devgrr.interp.ia.api.work.history.HistoryService;
 import net.devgrr.interp.ia.api.work.issue.entity.QIssue;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
+import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
 import net.devgrr.interp.ia.api.work.project.entity.QProject;
+import net.devgrr.interp.ia.api.work.project.file.ProjectFileService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +42,7 @@ public class ProjectService {
   private final ProjectRepository projectRepository;
   private final JPAQueryFactory queryFactory;
   private final ProjectMapper projectMapper;
+  private final ProjectFileService projectFileService;
   private final MemberService memberService;
   private final HistoryService historyService;
 
@@ -224,8 +229,7 @@ public class ProjectService {
           throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
       }
 
-      historyService.setHistory(
-          IssueCategory.PROJECT, id, beforeValue, afterValue, key, modifier);
+      historyService.setHistory(IssueCategory.PROJECT, id, beforeValue, afterValue, key, modifier);
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -266,5 +270,28 @@ public class ProjectService {
 
   public boolean existById(Long id) {
     return projectRepository.existsById(id);
+  }
+
+  public void exportProjects(String format, List<Long> ids, ServletOutputStream outputStream)
+      throws IOException {
+
+    List<ProjectResponse> issues =
+        ids == null || ids.isEmpty()
+            ? projectRepository.findAllByIsDeletedFalse().stream()
+                .map(projectMapper::toResponse)
+                .toList()
+            : projectRepository.findAllByIdInAndIsDeletedFalse(ids).stream()
+                .map(projectMapper::toResponse)
+                .toList();
+
+    try {
+      if ("csv".equals(format)) {
+        projectFileService.exportProjectsToCsv(issues, outputStream);
+      } else if ("xlsx".equals(format)) {
+        projectFileService.exportProjectsToXlsx(issues, outputStream);
+      }
+    } catch (IOException e) {
+      throw new IOException(e.getMessage(), e);
+    }
   }
 }
