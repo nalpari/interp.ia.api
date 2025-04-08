@@ -4,6 +4,9 @@ import java.io.*;
 import java.nio.file.FileSystems;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
@@ -63,7 +66,8 @@ public class FileService {
     return savedFile;
   }
 
-  public File downloadByFormat(MultipartFile file, MemberFileOptionRequest m) throws IOException, BaseException {
+  public File downloadByFormat(MultipartFile file, MemberFileOptionRequest m)
+      throws IOException, BaseException {
 
     String filePath = "";
     String fileName = m.fileName();
@@ -115,30 +119,20 @@ public class FileService {
     }
   }
 
-  public void getStreamingResponse(OutputStream outputStream, File saveFile) {
-    try (FileInputStream fileInputStream = new FileInputStream(saveFile)) {
-      InputStream inputStream = new BufferedInputStream(fileInputStream);
+  public void getStreamingResponse(HttpServletResponse response, File saveFile) {
+    try (InputStream inputStream = new FileInputStream(saveFile);
+        OutputStream outputStream = response.getOutputStream()) {
       byte[] buffer = new byte[1024];
       int bytesRead;
-      //  파일에서 데이터 읽고 outputStream 으로 전송
       while ((bytesRead = inputStream.read(buffer)) != -1) {
         outputStream.write(buffer, 0, bytesRead);
-        //  버퍼에 데이터 쌓이는 것 방지
         outputStream.flush();
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     } finally {
-      //  garbage collector 실행 -> 메모리 회수
-      //  엑셀 파일의 경우 responseEntity 반환된 이후에도 열려있기 때문에 가비지 컬렉터 실행시켜 메모리 회수함
       System.gc();
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      } finally {
-        deleteFile(saveFile);
-      }
+      deleteFile(saveFile);
     }
   }
 }

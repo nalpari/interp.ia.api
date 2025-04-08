@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.*;
 import java.net.URLEncoder;
@@ -110,22 +111,20 @@ public class MemberController {
           @Content(
               encoding = @Encoding(name = "dto", contentType = MediaType.APPLICATION_JSON_VALUE)))
   @PostMapping(value = "/download", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<StreamingResponseBody> downloadMemberFile(
+  public void downloadMemberFile(
       @Parameter(description = "파일 업로드") @RequestPart(value = "file", required = false)
           MultipartFile file,
       @Parameter(description = "다운로드 옵션") @RequestPart(value = "dto")
-          MemberFileOptionRequest memberFileOptionRequest)
+          MemberFileOptionRequest memberFileOptionRequest,
+      HttpServletResponse response)
       throws BaseException, IOException {
     File saveFile = memberFileService.downloadMemberFile(file, memberFileOptionRequest);
     String fileNameEncoded = URLEncoder.encode(saveFile.getName(), StandardCharsets.UTF_8);
 
-    //    데이터 변환을 위해 저장했던 파일을 response 응답한 후 바로 삭제하기 위해 StreamingBody 사용
-    StreamingResponseBody body =
-        outputStream -> memberFileService.getStreamingResponse(outputStream, saveFile);
+    response.setContentType("application/octet-stream");
+    response.setHeader("Content-Disposition", "attachment; filename=\"" + fileNameEncoded + "\"");
 
-    return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileNameEncoded)
-        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-        .body(body);
+memberFileService.getStreamingResponse(response, saveFile);
+
   }
 }
