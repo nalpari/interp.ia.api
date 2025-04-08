@@ -2,6 +2,8 @@ package net.devgrr.interp.ia.api.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
+import java.util.Arrays;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.jwt.JwtService;
 import net.devgrr.interp.ia.api.jwt.exceptionHandler.JwtAuthenticationEntryPoint;
@@ -16,11 +18,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +28,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -48,8 +51,7 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .csrf(AbstractHttpConfigurer::disable)
-        .cors(Customizer.withDefaults())
-        .headers(headers -> headers.frameOptions(FrameOptionsConfig::disable))
+        .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfigurationSource()))
         .sessionManagement(
             (sessionManagement) ->
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -82,6 +84,22 @@ public class SecurityConfig {
             });
 
     return httpSecurity.build();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOriginPatterns(Collections.singletonList("*"));
+    config.setAllowedMethods(Arrays.asList("GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(Collections.singletonList("*"));
+    config.setExposedHeaders(
+        Arrays.asList("Authorization", "Content-Disposition", "Content-Length", "Content-Type"));
+    config.setAllowCredentials(true);
+
+    source.registerCorsConfiguration("/**", config);
+    return source;
   }
 
   @Bean
