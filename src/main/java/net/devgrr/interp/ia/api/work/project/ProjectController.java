@@ -1,11 +1,16 @@
 package net.devgrr.interp.ia.api.work.project;
 
+import static net.devgrr.interp.ia.api.util.DateUtil.formatDateTimeNow;
+
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import net.devgrr.interp.ia.api.config.exception.BaseException;
+import net.devgrr.interp.ia.api.config.exception.ErrorCode;
 import net.devgrr.interp.ia.api.config.issue.IssueStatus;
 import net.devgrr.interp.ia.api.config.issue.Priority;
 import net.devgrr.interp.ia.api.config.mapStruct.ProjectMapper;
@@ -21,7 +27,9 @@ import net.devgrr.interp.ia.api.work.project.dto.ProjectRequest;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectResponse;
 import net.devgrr.interp.ia.api.work.project.dto.ProjectValidationGroup;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -197,5 +205,39 @@ public class ProjectController {
   public void restoreProjectsById(@PathVariable("id") @Parameter(description = "프로젝트 ID") Long id)
       throws BaseException {
     projectService.putProjectsDeletedFlagById(id, false);
+  }
+
+  @Operation(
+      description =
+          """
+          프로젝트를 csv 또는 xlsx 파일로 내보낸다.
+
+          ids가 없을 경우 전체 프로젝트를 내보낸다.
+          """)
+  @GetMapping("/export")
+  public void exportProjects(
+      @RequestParam(value = "format") @Parameter(description = "파일 형식 (csv 또는 xlsx)") String format,
+      @RequestParam(value = "ids", required = false) @Parameter(description = "ID 목록")
+          List<Long> ids,
+      HttpServletResponse response)
+      throws BaseException {
+
+    if (format == null || (!format.equals("csv") && !format.equals("xlsx"))) {
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "'csv' 또는 'xlsx' 형식으로 입력해주세요.");
+    }
+
+    String fileName = "projects_" + formatDateTimeNow("yyyyMMdd_HHmmss") + "." + format;
+
+    try (ServletOutputStream body = response.getOutputStream()) {
+
+      response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+      response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+
+      projectService.exportProjects(format, ids, body);
+
+    } catch (IOException e) {
+      throw new BaseException(
+          ErrorCode.INTERNAL_SERVER_ERROR, "파일을 내보내는 중 오류가 발생했습니다: " + e.getMessage());
+    }
   }
 }

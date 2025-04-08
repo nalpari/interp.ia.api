@@ -1,6 +1,8 @@
 package net.devgrr.interp.ia.api.work.issue;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,8 +28,10 @@ import net.devgrr.interp.ia.api.member.entity.QMember;
 import net.devgrr.interp.ia.api.util.DateUtil;
 import net.devgrr.interp.ia.api.work.history.HistoryService;
 import net.devgrr.interp.ia.api.work.issue.dto.IssueRequest;
+import net.devgrr.interp.ia.api.work.issue.dto.IssueResponse;
 import net.devgrr.interp.ia.api.work.issue.entity.Issue;
 import net.devgrr.interp.ia.api.work.issue.entity.QIssue;
+import net.devgrr.interp.ia.api.work.issue.file.IssueFileService;
 import net.devgrr.interp.ia.api.work.project.ProjectService;
 import net.devgrr.interp.ia.api.work.project.entity.Project;
 import net.devgrr.interp.ia.api.work.project.entity.QProject;
@@ -44,6 +48,7 @@ public class IssueService {
   private final IssueRepository issueRepository;
   private final JPAQueryFactory queryFactory;
   private final IssueMapper issueMapper;
+  private final IssueFileService issueFileService;
   private final MemberService memberService;
   private final ProjectService projectService;
   private final HistoryService historyService;
@@ -398,8 +403,35 @@ public class IssueService {
     }
     return ids;
   }
-  
+
   public boolean existById(Long id) {
     return issueRepository.existsById(id);
+  }
+
+  public void exportIssues(String format, Long projectId, List<Long> ids, OutputStream outputStream)
+      throws IOException {
+
+    List<IssueResponse> issues;
+    if (ids != null) {
+      issues =
+          issueRepository.findAllByIdInAndIsDeletedFalse(ids).stream()
+              .map(issueMapper::toResponse)
+              .toList();
+    } else {
+      issues =
+          issueRepository.findAllByParentProjectId(projectId).stream()
+              .map(issueMapper::toResponse)
+              .toList();
+    }
+
+    try {
+      if ("csv".equals(format)) {
+        issueFileService.exportIssuesToCsv(issues, outputStream);
+      } else if ("xlsx".equals(format)) {
+        issueFileService.exportIssuesToXlsx(issues, outputStream);
+      }
+    } catch (IOException e) {
+      throw new IOException(e.getMessage(), e);
+    }
   }
 }
