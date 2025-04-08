@@ -72,6 +72,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/admin"))
                     .hasRole("ADMIN")
+                    .requestMatchers(new AntPathRequestMatcher("/api/**/export"))
+                    .hasAnyRole("USER", "ADMIN")
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(apiLoggingFilter, LogoutFilter.class)
