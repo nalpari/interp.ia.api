@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 
@@ -19,7 +20,10 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
     String errMsg = exception.getMessage();
     if (errMsg.contains("Method not supported")) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } else {
+    } else if(exception instanceof DisabledException) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN, "비활성화된 게정입니다.");
+    }
+    else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       response.getWriter().write("Fail");
     }
