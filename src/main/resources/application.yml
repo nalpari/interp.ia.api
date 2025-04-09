@@ -23,6 +23,8 @@ spring:
       data-locations: classpath:/data.sql
   profiles:
     include: jwt
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
 
 jasypt:
   encryptor:
@@ -54,3 +56,4 @@ server:
   port: 8080
   error:
     include-stacktrace: always
+  shutdown: graceful
