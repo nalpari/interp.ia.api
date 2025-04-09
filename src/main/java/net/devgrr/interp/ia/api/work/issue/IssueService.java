@@ -353,7 +353,7 @@ public class IssueService {
           throw new BaseException(ErrorCode.INVALID_INPUT_VALUE);
       }
 
-      historyService.setHistory(IssueCategory.PROJECT, id, beforeValue, afterValue, key, modifier);
+      historyService.setHistory(IssueCategory.ISSUE, id, beforeValue, afterValue, key, modifier);
 
     } catch (Exception e) {
       throw new BaseException(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage());
