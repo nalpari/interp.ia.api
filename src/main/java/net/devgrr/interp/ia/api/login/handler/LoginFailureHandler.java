@@ -21,7 +21,7 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
     if (errMsg.contains("Method not supported")) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } else if(exception instanceof DisabledException) {
-      response.sendError(HttpServletResponse.SC_FORBIDDEN, "비활성화된 게정입니다.");
+      response.sendError(HttpServletResponse.SC_FORBIDDEN, "비활성화된 계정입니다.");
     }
     else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
