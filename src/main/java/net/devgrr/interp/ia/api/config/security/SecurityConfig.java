@@ -130,7 +130,7 @@ public class SecurityConfig {
   @Bean
   public JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordLoginFilter() {
     JsonUsernamePasswordAuthenticationFilter jsonUsernamePasswordLoginFilter =
-        new JsonUsernamePasswordAuthenticationFilter(objectMapper);
+        new JsonUsernamePasswordAuthenticationFilter(objectMapper, memberRepository);
     jsonUsernamePasswordLoginFilter.setAuthenticationManager(authenticationManager());
     jsonUsernamePasswordLoginFilter.setAuthenticationSuccessHandler(
         loginSuccessJWTProvideHandler());
