@@ -1,5 +1,6 @@
 package net.devgrr.interp.ia.api.member.file.importData;
 
+import jakarta.validation.constraints.NotBlank;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Constructor;
@@ -27,8 +28,10 @@ public class ExelStreamReader<T> {
   private int currentRow;
   private int currentSheet;
 
-  @Setter private String[] fieldNames;
-  private String[] headers;
+  private List<String> headers;
+  //  전체 필드
+  private List<String> allFieldNames;
+
   @Setter private Class<T> clazz;
 
   @SneakyThrows
@@ -80,24 +83,28 @@ public class ExelStreamReader<T> {
               try {
                 return mappingData(rowData);
               } catch (Exception e) {
-                e.printStackTrace();
+                e.fillInStackTrace();
                 return null;
               }
             });
   }
 
   private T mappingData(Row row) throws Exception {
-    Object[] values = new Object[headers.length];
+    Object[] values = new Object[allFieldNames.size()];
+    //    header 기준 입력된 데이터
     Map<String, Object> valueMap = new HashMap<>();
 
-    for (int i = 0; i < headers.length; i++) {
+    for (int i = 0; i < headers.size(); i++) {
       Cell cell = row.getCell(i);
 
       Object value = getCellValue(cell);
-      valueMap.put(headers[i], value);
+      valueMap.put(headers.get(i), value);
     }
-    for (int i = 0; i < fieldNames.length; i++) {
-      values[i] = valueMap.get(fieldNames[i]);
+
+    for (int i = 0; i < allFieldNames.size(); i++) {
+      Object value = valueMap.get(allFieldNames.get(i));
+      values[i] = value;
+      // null 이여도 할당
     }
 
     Constructor<T> constructor =
@@ -107,6 +114,7 @@ public class ExelStreamReader<T> {
     try {
       return constructor.newInstance(values);
     } catch (IllegalArgumentException e) {
+      deleteErrorFile(file);
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "MemberRequest 필드 타입 불일치");
     }
   }
@@ -132,16 +140,36 @@ public class ExelStreamReader<T> {
   }
 
   private void readHeader() throws BaseException {
-    List<String> header = new ArrayList<>();
+    headers = new ArrayList<>();
     Row row = sheet.getRow(0);
     for (int i = 0; i < row.getPhysicalNumberOfCells(); i++) {
       Cell cell = row.getCell(i);
-      header.add(cell.getStringCellValue());
+      headers.add(cell.getStringCellValue());
     }
-    if (fieldNames.length == header.size()) {
-      headers = header.toArray(new String[0]);
-    } else {
-      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "컬럼 수 맞지 않음");
+    allFieldNames = Arrays.stream(clazz.getDeclaredFields()).map(Field::getName).toList();
+
+    //  notBlank annotation 있는 필드
+    List<String> fieldNames =
+        Arrays.stream(clazz.getDeclaredFields())
+            .filter(field -> field.getAnnotation(NotBlank.class) != null)
+            .map(Field::getName)
+            .toList();
+
+    if (headers.size() > allFieldNames.size() || headers.size() < fieldNames.size()) {
+      deleteErrorFile(file);
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "입력 된 컬럼 수가 맞지 않습니다.");
+    }
+
+    List<String> onlyHeader = headers.stream().filter(s -> !fieldNames.contains(s)).toList();
+    if (onlyHeader.stream().anyMatch(s -> !allFieldNames.contains(s))) {
+      deleteErrorFile(file);
+      throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "입력 된 헤더 명이 맞지 않습니다.");
+    }
+  }
+
+  private void deleteErrorFile(File file) {
+    if(file.exists()) {
+      boolean deleted = file.delete();
     }
   }
 }
