@@ -52,66 +52,36 @@ public class FileService {
     deleteFile(savedFile);
   }
 
-  public File downloadMemberFile(
-      MultipartFile file, MemberFileOptionRequest memberFileOptionRequest)
+  public File downloadMemberFile(MemberFileOptionRequest request)
       throws BaseException, IOException {
     createDirectory();
-    File savedFile;
-
-    if (file == null || file.isEmpty()) {
-      savedFile = downloadByNonFormat(memberFileOptionRequest);
-    } else {
-      savedFile = downloadByFormat(file, memberFileOptionRequest);
-    }
-    return savedFile;
-  }
-
-  public File downloadByFormat(MultipartFile file, MemberFileOptionRequest m)
-      throws IOException, BaseException {
-
-    String filePath = "";
-    String fileName = m.fileName();
-    if (fileName == null) {
-      filePath = FILE_DIRECTORY + "Data_" + file.getOriginalFilename();
-    } else {
-      filePath =
-          FILE_DIRECTORY + fileName + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-    }
-    File savedFile = new File(filePath);
-    file.transferTo(savedFile);
-
-    filesWriter.filesWriter(m.header(), m.columns(), filePath, m.dataFormat());
-
-    return new File(savedFile.getAbsolutePath());
-  }
-
-  public File downloadByNonFormat(MemberFileOptionRequest m) throws BaseException, IOException {
     String extension = "";
-    if (m.fileType() == null || m.fileType().isEmpty()) {
+    if (request.fileType() == null || request.fileType().isEmpty()) {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "확장자 입력이 없습니다.");
     }
-    if ("csv".equals(m.fileType())) {
+    if ("csv".equals(request.fileType())) {
       extension = ".csv";
     }
-    if ("xlsx".equals(m.fileType())) {
+    if ("xlsx".equals(request.fileType())) {
       extension = ".xlsx";
     }
-    if ("xls".equals(m.fileType())) {
+    if ("xls".equals(request.fileType())) {
       extension = ".xls";
     }
-    String fileName = m.fileName();
-    if (m.fileName() == null || m.fileName().isEmpty()) {
+    String fileName = request.fileName();
+    if (request.fileName() == null || request.fileName().isEmpty()) {
       LocalDate today = LocalDate.now();
       fileName = "Member_data_" + today.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + extension;
     } else {
-      fileName = m.fileName() + extension;
+      fileName = request.fileName() + extension;
     }
     String filePath = FILE_DIRECTORY + fileName;
 
-    filesWriter.filesWriter(m.header(), m.columns(), filePath, "");
+    filesWriter.filesWriter(request.header(), request.columns(), filePath);
 
     return new File(filePath);
   }
+
 
   public void deleteFile(File file) {
     if (file.exists()) {
