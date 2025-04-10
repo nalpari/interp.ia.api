@@ -13,7 +13,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExelStreamWriter {
   @Setter private File file;
-  @Setter private String dataFormat;
   @Setter private boolean header;
   @Setter private boolean isXlsx;
 
@@ -25,12 +24,7 @@ public class ExelStreamWriter {
   private int row = 0;
   private int cell = 0;
 
-  public void open() throws IOException {
-    if (dataFormat != null && !dataFormat.isEmpty()) {
-      setRowCol();
-      doOpenFile();
-      return;
-    }
+  public void open() {
     if (isXlsx) {
       this.workbook = new XSSFWorkbook();
     } else {
@@ -39,21 +33,7 @@ public class ExelStreamWriter {
     this.sheet = workbook.createSheet("Sheet1");
   }
 
-  private void doOpenFile() {
-    try {
-      FileInputStream inputStream = new FileInputStream(file);
-      if (isXlsx) {
-        this.workbook = new XSSFWorkbook(inputStream);
-      } else {
-        this.workbook = new HSSFWorkbook(inputStream);
-      }
-      this.sheet = workbook.getSheetAt(0);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public void write(List<Map<String, Object>> data) throws IOException {
+  public void write(List<Map<String, Object>> data) {
     open();
 
     if (header) {
@@ -103,10 +83,5 @@ public class ExelStreamWriter {
       c.setCellValue(fieldNames[i]);
     }
     row++;
-  }
-
-  private void setRowCol() {
-    this.cell = Character.toLowerCase(dataFormat.charAt(0)) - 'a';
-    this.row = Integer.parseInt(dataFormat.substring(1)) - 1;
   }
 }

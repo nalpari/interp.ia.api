@@ -24,22 +24,20 @@ public class FilesWriter {
   private final MemberRepository memberRepository;
   private final EntityManager entityManager;
 
-  public void filesWriter(boolean header, List<String> cols, String filePath, String dataFormat)
+  public void filesWriter(boolean header, List<String> cols, String filePath)
       throws IOException, BaseException {
     if (filePath.endsWith(".csv")) {
       csvWriter(filePath, header, cols);
     } else if (filePath.endsWith(".xlsx")) {
-      exelWriter(filePath, header, cols, dataFormat, true);
+      exelWriter(filePath, header, cols, true);
     } else if (filePath.endsWith(".xls")) {
-      exelWriter(filePath, header, cols, dataFormat, false);
+      exelWriter(filePath, header, cols, false);
     } else {
       throw new BaseException(ErrorCode.INVALID_INPUT_VALUE, "허용되지 않은 파일 확장자입니다.");
     }
   }
 
-  private void exelWriter(
-      String filePath, boolean header, List<String> cols, String dataFormat, boolean isXlsx)
-      throws IOException {
+  private void exelWriter(String filePath, boolean header, List<String> cols, boolean isXlsx) {
     List<String> fieldNames = new ArrayList<>();
     File file = new File(filePath);
     if (!file.exists()) {
@@ -51,8 +49,10 @@ public class FilesWriter {
     writer.setHeader(header);
     writer.setXlsx(isXlsx);
     if (cols == null) {
+      //      Member Entity Field names
       fieldNames.addAll(
           Arrays.stream(Member.class.getDeclaredFields()).map(Field::getName).toList());
+      //      Base Entity Field names
       fieldNames.addAll(
           Arrays.stream(Member.class.getSuperclass().getDeclaredFields())
               .map(Field::getName)
@@ -62,10 +62,11 @@ public class FilesWriter {
       fieldNames.addAll(cols);
       writer.setFieldNames(fieldNames.toArray(new String[0]));
     }
-    writer.setDataFormat(dataFormat);
+
     List<List<Object>> dataList = getData(cols);
     List<Map<String, Object>> data = new ArrayList<>();
     for (List<Object> objects : dataList) {
+      //      key - field name, value - db value (ex: email - admin@admin.com)
       Map<String, Object> map = new HashMap<>();
       for (int i = 0; i < objects.size(); i++) {
         map.put(fieldNames.get(i), objects.get(i));
@@ -80,10 +81,19 @@ public class FilesWriter {
     List<List<Object>> data = new ArrayList<>();
 
     if (cols == null || cols.isEmpty()) {
-      List<Member> members = new ArrayList<>();
-      members.addAll(memberRepository.findAll());
+      List<Member> members = new ArrayList<>(memberRepository.findAll());
       for (Member member : members) {
-        List<Object> row = getMemberRow(member);
+        List<Object> row = new ArrayList<>();
+        for (Field field : member.getClass().getDeclaredFields()) {
+          field.setAccessible(true);
+          try {
+            row.add(field.get(member));
+          } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        }
+        row.add(member.getCreatedDate());
+        row.add(member.getUpdatedDate());
         data.add(row);
       }
     } else {
@@ -94,9 +104,7 @@ public class FilesWriter {
       String query = "select " + String.join(", ", sql) + " from Member m";
       List<Object[]> rawData = entityManager.createQuery(query).getResultList();
 
-      data = rawData.stream()
-              .map(Arrays::asList)
-              .collect(Collectors.toList());
+      data = rawData.stream().map(Arrays::asList).collect(Collectors.toList());
     }
     return data;
   }
@@ -108,13 +116,13 @@ public class FilesWriter {
     if (header) {
       if (cols == null) {
         String memberField =
-                Arrays.stream(Member.class.getDeclaredFields())
-                        .map(Field::getName)
-                        .collect(Collectors.joining(","));
+            Arrays.stream(Member.class.getDeclaredFields())
+                .map(Field::getName)
+                .collect(Collectors.joining(","));
         String baseField =
-                Arrays.stream(Member.class.getSuperclass().getDeclaredFields())
-                        .map(Field::getName)
-                        .collect(Collectors.joining(","));
+            Arrays.stream(Member.class.getSuperclass().getDeclaredFields())
+                .map(Field::getName)
+                .collect(Collectors.joining(","));
         bw.write(memberField + "," + baseField);
         bw.newLine();
       } else {
@@ -123,31 +131,11 @@ public class FilesWriter {
       }
     }
     for (List<Object> datum : data) {
-      bw.write(datum.stream().map(obj -> Objects.toString(obj, "")).collect(Collectors.joining(",")));
+      bw.write(
+          datum.stream().map(obj -> Objects.toString(obj, "")).collect(Collectors.joining(",")));
       bw.newLine();
     }
     bw.flush();
     bw.close();
-  }
-
-  private List<Object> getMemberRow(Member member) {
-    List<Object> row = new ArrayList<>();
-
-    row.add(member.getId());
-    row.add(member.getEmail());
-    row.add(member.getPassword());
-    row.add(member.getName());
-    row.add(member.getImage());
-    row.add(member.getPosition());
-    row.add(member.getDepartment());
-    row.add(member.getJob());
-    row.add(member.getPhone());
-    row.add(member.getRole());
-    row.add(member.getRefreshToken());
-    row.add(member.getIsActive());
-    row.add(member.getCreatedDate());
-    row.add(member.getUpdatedDate());
-
-    return row;
   }
 }
