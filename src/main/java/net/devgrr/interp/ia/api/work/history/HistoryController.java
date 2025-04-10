@@ -24,7 +24,7 @@ public class HistoryController {
   private final HistoryMapper historyMapper;
 
   @Operation(description = "프로젝트/이슈의 변경이력을 조회한다.")
-  @GetMapping("/{category}/{issueId}")
+  @GetMapping("/{category}/{id}")
   public List<HistoryResponse> getHistoryByCategoryAndIssueId(
       @PathVariable("category") @Parameter(description = "카테고리 (ex. project, issue)")
           IssueCategory category,
