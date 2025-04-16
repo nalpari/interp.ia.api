@@ -34,6 +34,7 @@ jobs:
         host: ${{ secrets.SERVER_IP }}
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        envs: APPLICATION_NAME
         script: |
           # Create Git tag, build and push Docker image
           cd /home/ubuntu/interp/interp.deployment/scripts/$APPLICATION_NAME.sh
