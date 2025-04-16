@@ -35,9 +35,6 @@ jobs:
         run: |
           # Clone the deploy script repository
           git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
-          cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
-          git pull origin main
-          
           # Create Git tag, build and push Docker image in shell scripts
           cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}/scripts
           chmod +x ./${{ github.event.repository.name }}.sh
@@ -58,7 +55,7 @@ jobs:
               git clone ${{ secrets.DEPLOY_SCRIPTS_REPO }} $DEPLOY_DIR
             else
               cd $DEPLOY_DIR
-              git pull origin main
+              git fetch origin && git reset --hard origin/main
             fi
             
             # Restart the Docker containers
