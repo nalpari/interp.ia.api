@@ -32,7 +32,7 @@ jobs:
       - name: Build and push Docker image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository.name }}
+          GITHUB_REPOSITORY: ${{ github.event.repository.name }}
           API_SOURCE_PATH: /home/runner/work/$GITHUB_REPOSITORY/$GITHUB_REPOSITORY
         run: |
           # Clone the deploy script repository
