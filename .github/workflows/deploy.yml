@@ -18,50 +18,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v2
-		
-    - name: Log in to DockerHub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
-    - name: Build and push Docker image
-      run: |
-        # Clone the deploy script repository
-        git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
-        cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
-        git pull origin main
-        
-        # Create Git tag, build and push Docker image in shell scripts
-        cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}/scripts
-        chmod +x ./$APPLICATION_NAME.sh
-        ./$APPLICATION_NAME.sh
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-    - name: SSH to server, Restart application services
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        envs: APPLICATION_DEPLOY_SCRIPT_PATH,APPLICATION_NAME
-        script: |
-          DEPLOY_DIR=/home/${{ secrets.SERVER_USERNAME }}/$APPLICATION_DEPLOY_SCRIPT_PATH
+      - name: Build and push Docker image
+        run: |
+          # Clone the deploy script repository
+          git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
+          cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
+          git pull origin main
           
-          # Update deploy script
-          if [ ! -d "$DEPLOY_DIR" ]; then
-            git clone ${{ secrets.DEPLOY_SCRIPTS_REPO }} $DEPLOY_DIR
-          else
+          # Create Git tag, build and push Docker image in shell scripts
+          cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}/scripts
+          chmod +x ./$APPLICATION_NAME.sh
+          ./$APPLICATION_NAME.sh
+
+      - name: SSH to server, Restart application services
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: APPLICATION_DEPLOY_SCRIPT_PATH,APPLICATION_NAME
+          script: |
+            DEPLOY_DIR=/home/${{ secrets.SERVER_USERNAME }}/$APPLICATION_DEPLOY_SCRIPT_PATH
+            
+            # Update deploy script
+            if [ ! -d "$DEPLOY_DIR" ]; then
+              git clone ${{ secrets.DEPLOY_SCRIPTS_REPO }} $DEPLOY_DIR
+            else
+              cd $DEPLOY_DIR
+              git pull origin main
+            fi
+            
+            # Restart the Docker containers
             cd $DEPLOY_DIR
-            git pull origin main
-          fi
-          
-          # Restart the Docker containers
-          cd $DEPLOY_DIR
-          docker compose down
-          docker compose pull
-          docker compose up -d
+            docker compose down
+            docker compose pull
+            docker compose up -d
