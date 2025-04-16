@@ -37,7 +37,7 @@ jobs:
         envs: APPLICATION_NAME
         script: |
           # Create Git tag, build and push Docker image
-          cd /home/ubuntu/interp/interp.deployment/scripts/$APPLICATION_NAME.sh
+          cd /home/ubuntu/interp/interp.deployment/scripts
           chmod +x ./$APPLICATION_NAME.sh
           ./$APPLICATION_NAME.sh
           
