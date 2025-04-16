@@ -11,7 +11,6 @@ on:
 
 env:
   APPLICATION_DEPLOY_SCRIPT_PATH: interp/interp.deployment
-  APPLICATION_NAME: interp.ia.api
 
 jobs:
   deploy:
@@ -31,6 +30,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build and push Docker image
+        env:
+          API_SOURCE_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
         run: |
           # Clone the deploy script repository
           git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
@@ -39,8 +40,8 @@ jobs:
           
           # Create Git tag, build and push Docker image in shell scripts
           cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}/scripts
-          chmod +x ./$APPLICATION_NAME.sh
-          ./$APPLICATION_NAME.sh
+          chmod +x ./${{ github.event.repository.name }}.sh
+          ./${{ github.event.repository.name }}.sh $API_SOURCE_PATH
 
       - name: SSH to server, Restart application services
         uses: appleboy/ssh-action@v1.0.0
@@ -48,7 +49,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: APPLICATION_DEPLOY_SCRIPT_PATH,APPLICATION_NAME
+          envs: APPLICATION_DEPLOY_SCRIPT_PATH
           script: |
             DEPLOY_DIR=/home/${{ secrets.SERVER_USERNAME }}/$APPLICATION_DEPLOY_SCRIPT_PATH
             
