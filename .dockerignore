@@ -1,0 +1,43 @@
+# 테스트 디렉터리
+src/test/
+
+# Gradle 빌드 산출물
+/build/
+*.class
+*.jar
+*.war
+
+# Gradle 자체
+.gradle/
+**/.gradle/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VSCode
+.vscode/
+
+# 버전 관리 시스템
+.git/
+.gitignore
+
+# 로그 및 임시 파일
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# OS에서 생성하는 파일
+.DS_Store
+Thumbs.db
+
+# Docker 관련
+Dockerfile*
+.dockerignore
