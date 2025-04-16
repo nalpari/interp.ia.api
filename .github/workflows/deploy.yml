@@ -31,14 +31,16 @@ jobs:
 
       - name: Build and push Docker image
         env:
-          API_SOURCE_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          API_SOURCE_PATH: /home/runner/work/${{ github.repository }}/${{ github.repository }}
         run: |
           # Clone the deploy script repository
           git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
           # Create Git tag, build and push Docker image in shell scripts
           cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}/scripts
-          chmod +x ./${{ github.event.repository.name }}.sh
-          ./${{ github.event.repository.name }}.sh $API_SOURCE_PATH
+          chmod +x ./${{ github.repository }}.sh
+          ./${{ github.repository }}.sh $API_SOURCE_PATH
 
       - name: SSH to server, Restart application services
         uses: appleboy/ssh-action@v1.0.0
