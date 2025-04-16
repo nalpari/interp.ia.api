@@ -17,7 +17,7 @@ public class HistoryService {
   private final HistoryRepository historyRepository;
 
   public List<History> getHistoryByCategoryAndIssueId(IssueCategory category, Long issueId) {
-    return historyRepository.findAllByCategoryAndIssueId(category.getValue(), issueId);
+    return historyRepository.findAllByCategoryAndIssueId(category, issueId);
   }
 
   @Transactional
