@@ -7,9 +7,11 @@ on:
   pull_request:
     branches:
       - deploy
+  workflow_dispatch:
 
 env:
-  APPLICATION_NAME: interp.log.api
+  APPLICATION_SCRIPT_PATH: interp/interp.deployment
+  APPLICATION_NAME: interp.ia.api
 
 jobs:
   deploy:
@@ -32,17 +34,27 @@ jobs:
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.SERVER_IP }}
-        username: ubuntu
+        username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        envs: APPLICATION_NAME
+        envs: APPLICATION_SCRIPT_PATH,APPLICATION_NAME
         script: |
+          DEPLOY_DIR=/home/${{ secrets.SERVER_USERNAME }}/$APPLICATION_SCRIPT_PATH
+          
+          # Update deploy script
+          if [ ! -d "$DEPLOY_DIR" ]; then
+            git clone ${{ secrets.DEPLOY_SCRIPTS_REPO }} $DEPLOY_DIR
+          else
+            cd $DEPLOY_DIR
+            git pull origin main
+          fi
+          
           # Create Git tag, build and push Docker image
-          cd /home/ubuntu/interp/interp.deployment/scripts
+          cd $DEPLOY_DIR/scripts
           chmod +x ./$APPLICATION_NAME.sh
           ./$APPLICATION_NAME.sh
           
           # Restart the Docker containers
-          cd /home/ubuntu/interp
+          cd $DEPLOY_DIR
           docker compose down
           docker compose pull
           docker compose up -d
