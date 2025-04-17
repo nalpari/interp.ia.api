@@ -32,10 +32,9 @@ jobs:
       - name: Build and push Docker image
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          APP_NAME=${{ github.event.repository.name }}
+          APP_NAME: ${{ github.event.repository.name }}
           APP_SOURCE_PATH: /home/runner/work/$APP_NAME/$APP_NAME
-          
+        run: |
           # Clone the deploy script repository
           git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
           
