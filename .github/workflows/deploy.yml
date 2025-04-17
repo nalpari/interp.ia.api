@@ -33,7 +33,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APP_NAME: ${{ github.event.repository.name }}
-          APP_SOURCE_PATH: /home/runner/work/$APP_NAME/$APP_NAME
+          APP_SOURCE_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
         run: |
           # Clone the deploy script repository
           git clone ${{ secrets.DEPLOY_SCRIPTS_REPO_URL }} /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}
