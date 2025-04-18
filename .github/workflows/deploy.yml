@@ -31,9 +31,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Generate version tag (KST Timezone)
+        run: |
+          # date format: yymmddHHMM
+          export TZ=Asia/Seoul
+          DATE=$(date +'%y%m%d%H%M')
+          
+          # Get the last version tag and increment it
+          git fetch --tags
+          LAST_SEQ=$(git tag --sort=-v:refname | sed -E 's/^v([0-9]+).*/\1/' | head -n1)
+          LAST_SEQ=${LAST_SEQ:-0}
+          SEQ=$((LAST_SEQ + 1))
+          
+          # Generate the new version tag (e.g., v1-2501011200)
+          TAG="v${SEQ}-${DATE}"
+          echo "Generated version tag: $TAG"
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APP_NAME: ${{ github.event.repository.name }}
           APP_SOURCE_PATH: /home/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}
         run: |
@@ -43,11 +59,10 @@ jobs:
           # Build and push Docker image in shell scripts
           cd /tmp/${{ secrets.DEPLOY_SCRIPTS_REPO_NAME }}/scripts
           chmod +x ./$APP_NAME.sh
-          ./$APP_NAME.sh $APP_SOURCE_PATH
+          ./$APP_NAME.sh "$APP_SOURCE_PATH" "$TAG_NAME"
 
-      - name: Generate Git Tag
+      - name: Create Git tag
         run: |
-          TAG_NAME=`date +%Y%m%d%H%M`
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git tag $TAG_NAME
@@ -73,6 +88,9 @@ jobs:
             
             # Restart the Docker containers
             cd $DEPLOY_DIR
-            docker compose down
-            docker compose pull
-            docker compose up -d
+            echo ":::: Stopping containers..."
+            docker compose down || { echo "Failed to stop containers"; }
+            echo ":::: Pulling images..."
+            docker compose pull || { echo "Failed to pull images"; }
+            echo ":::: Starting containers..."
+            docker compose up -d || { echo "Failed to start containers"; }
