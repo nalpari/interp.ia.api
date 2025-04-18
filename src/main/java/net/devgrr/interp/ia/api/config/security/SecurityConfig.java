@@ -103,7 +103,7 @@ public class SecurityConfig {
     config.setAllowedMethods(Arrays.asList("GET", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(Collections.singletonList("*"));
     config.setExposedHeaders(
-        Arrays.asList("Authorization", "Content-Disposition", "Content-Length", "Content-Type"));
+        Arrays.asList("Accesstoken", "Refreshtoken", "Content-Disposition", "Content-Length", "Content-Type"));
     config.setAllowCredentials(true);
 
     source.registerCorsConfiguration("/**", config);
