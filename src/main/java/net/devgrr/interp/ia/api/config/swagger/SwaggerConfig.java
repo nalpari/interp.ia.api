@@ -42,16 +42,14 @@ public class SwaggerConfig {
             accessHeader,
             new SecurityScheme()
                 .name(accessHeader)
-                .description("Format: {access_token}")
-                .type(SecurityScheme.Type.HTTP)
-                .in(SecurityScheme.In.HEADER)
-                .scheme("bearer")
-                .bearerFormat("JWT"))
+                .description("Format: Bearer {Accesstoken}")
+                .type(SecurityScheme.Type.APIKEY)
+                .in(SecurityScheme.In.HEADER))
         .addSecuritySchemes(
             refreshHeader,
             new SecurityScheme()
                 .name(refreshHeader)
-                .description("Format: Bearer {refresh_token}")
+                .description("Format: Bearer {Refreshtoken}")
                 .type(SecurityScheme.Type.APIKEY)
                 .in(SecurityScheme.In.HEADER));
   }
