@@ -2,7 +2,7 @@ jwt:
   secret: c2lsdmVybmluZS10ZWNoLXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQtc2lsdmVybmluZS10ZWNoLXNwcmluZy1ib290LWp3dC10dXRvcmlhbC1zZWNyZXQK
   access:
     expiration: 1800
-    header: Authorization
+    header: Accesstoken
   refresh:
     expiration: 3600
-    header: Authorization-refresh
+    header: Refreshtoken
