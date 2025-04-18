@@ -2,15 +2,11 @@ package net.devgrr.interp.ia.api.login.filter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-
-import net.devgrr.interp.ia.api.config.exception.BaseException;
-import net.devgrr.interp.ia.api.config.exception.ErrorCode;
 import net.devgrr.interp.ia.api.member.MemberRepository;
 import net.devgrr.interp.ia.api.member.entity.Member;
 import org.springframework.security.authentication.AuthenticationServiceException;
